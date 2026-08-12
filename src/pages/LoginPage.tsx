@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { fetchWilayas, fetchCommunes, fetchShopTypes, upsertProfile } from '@/lib/api';
+import { fetchWilayas, fetchCommunes, fetchShopTypes, upsertProfile, touchProfile } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import type { Wilaya, Commune, ShopType } from '@/types';
 import {
@@ -135,18 +135,10 @@ export default function LoginPage() {
           );
         }
       } else {
-        // For sign-in, just touch the phone
+        // For sign-in, only update phone + name (no wilaya/commune to avoid FK violations)
         const { data: userData } = await supabase.auth.getUser();
         if (userData.user) {
-          await upsertProfile(
-            userData.user.id,
-            fullPhone(),
-            '',
-            0,
-            undefined,
-            firstName.trim(),
-            undefined
-          );
+          await touchProfile(userData.user.id, fullPhone(), firstName.trim());
         }
       }
 

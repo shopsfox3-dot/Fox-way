@@ -72,11 +72,24 @@ export async function upsertProfile(
   const { error } = await supabase.from('profiles').upsert({
     id: userId,
     phone,
-    wilaya_code: wilayaCode,
-    commune_id: communeId,
+    wilaya_code: wilayaCode || null,
+    commune_id: communeId || null,
     shop_type_id: shopTypeId ?? null,
     first_name: firstName ?? null,
     last_name: lastName ?? null,
   });
+  if (error) throw error;
+}
+
+export async function touchProfile(
+  userId: string,
+  phone: string,
+  firstName?: string
+) {
+  const { error } = await supabase.from('profiles').upsert({
+    id: userId,
+    phone,
+    first_name: firstName ?? null,
+  }, { onConflict: 'id' });
   if (error) throw error;
 }
