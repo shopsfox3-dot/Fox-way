@@ -37,16 +37,16 @@ const MOCK_CATEGORIES: Category[] = [
 ];
 
 const MOCK_PRODUCTS: Product[] = [
-  { id: 'p-1', category_id: 'cat-1', name: 'زيت المائدة 5 لتر', description: 'زيت نباتي مكرر للتعبئة', price: 850, unit: 'علبة', stock: 200, image_url: null, sort_order: 1 },
-  { id: 'p-2', category_id: 'cat-1', name: 'سميد متوسط 5 كغ', description: 'سميد من القمح الصلب', price: 450, unit: 'كيس', stock: 150, image_url: null, sort_order: 2 },
-  { id: 'p-3', category_id: 'cat-1', name: 'طحين فاخر 25 كغ', description: 'طحين أبيض فاخر للخبز', price: 1200, unit: 'كيس', stock: 100, image_url: null, sort_order: 3 },
-  { id: 'p-4', category_id: 'cat-1', name: 'سكر أبيض 5 كغ', description: 'سكر مكرر حبيبات', price: 375, unit: 'كيس', stock: 300, image_url: null, sort_order: 4 },
-  { id: 'p-5', category_id: 'cat-2', name: 'ماء معدني 1.5 لتر (12 حبة)', description: 'علبة ماء معدني طبيعي', price: 180, unit: 'علبة', stock: 400, image_url: null, sort_order: 1 },
-  { id: 'p-6', category_id: 'cat-2', name: 'عصير مشكل 1 لتر', description: 'عصير فواكه مشكل طبيعي', price: 120, unit: 'علبة', stock: 250, image_url: null, sort_order: 2 },
-  { id: 'p-7', category_id: 'cat-3', name: 'حفاضات حجم 4 (60 قطعة)', description: 'حفاضات أطفال قطن ناعم', price: 750, unit: 'علبة', stock: 100, image_url: null, sort_order: 1 },
-  { id: 'p-8', category_id: 'cat-4', name: 'سائل جلي 1 لتر', description: 'سائل غسيل الصحون المركز', price: 180, unit: 'علبة', stock: 300, image_url: null, sort_order: 1 },
-  { id: 'p-9', category_id: 'cat-5', name: 'شامبو 400 مل', description: 'شامبو لجميع أنواع الشعر', price: 250, unit: 'علبة', stock: 150, image_url: null, sort_order: 1 },
-  { id: 'p-10', category_id: 'cat-6', name: 'أكياس بلاستيكية (500 قطعة)', description: 'أكياس متعددة الأحجام', price: 200, unit: 'علبة', stock: 300, image_url: null, sort_order: 1 },
+  { id: 'p-1', category_id: 'cat-1', name: 'زيت المائدة 5 لتر', description: 'زيت نباتي مكرر للتعبئة', price: 850, unit: 'علبة', stock: 200, image_url: null, sort_order: 1, market_unavailable: false },
+  { id: 'p-2', category_id: 'cat-1', name: 'سميد متوسط 5 كغ', description: 'سميد من القمح الصلب', price: 450, unit: 'كيس', stock: 150, image_url: null, sort_order: 2, market_unavailable: false },
+  { id: 'p-3', category_id: 'cat-1', name: 'طحين فاخر 25 كغ', description: 'طحين أبيض فاخر للخبز', price: 1200, unit: 'كيس', stock: 100, image_url: null, sort_order: 3, market_unavailable: false },
+  { id: 'p-4', category_id: 'cat-1', name: 'سكر أبيض 5 كغ', description: 'سكر مكرر حبيبات', price: 375, unit: 'كيس', stock: 300, image_url: null, sort_order: 4, market_unavailable: false },
+  { id: 'p-5', category_id: 'cat-2', name: 'ماء معدني 1.5 لتر (12 حبة)', description: 'علبة ماء معدني طبيعي', price: 180, unit: 'علبة', stock: 400, image_url: null, sort_order: 1, market_unavailable: false },
+  { id: 'p-6', category_id: 'cat-2', name: 'عصير مشكل 1 لتر', description: 'عصير فواكه مشكل طبيعي', price: 120, unit: 'علبة', stock: 250, image_url: null, sort_order: 2, market_unavailable: false },
+  { id: 'p-7', category_id: 'cat-3', name: 'حفاضات حجم 4 (60 قطعة)', description: 'حفاضات أطفال قطن ناعم', price: 750, unit: 'علبة', stock: 100, image_url: null, sort_order: 1, market_unavailable: false },
+  { id: 'p-8', category_id: 'cat-4', name: 'سائل جلي 1 لتر', description: 'سائل غسيل الصحون المركز', price: 180, unit: 'علبة', stock: 300, image_url: null, sort_order: 1, market_unavailable: false },
+  { id: 'p-9', category_id: 'cat-5', name: 'شامبو 400 مل', description: 'شامبو لجميع أنواع الشعر', price: 250, unit: 'علبة', stock: 150, image_url: null, sort_order: 1, market_unavailable: false },
+  { id: 'p-10', category_id: 'cat-6', name: 'أكياس بلاستيكية (500 قطعة)', description: 'أكياس متعددة الأحجام', price: 200, unit: 'علبة', stock: 300, image_url: null, sort_order: 1, market_unavailable: false },
 ];
 
 export async function fetchWilayas(): Promise<Wilaya[]> {

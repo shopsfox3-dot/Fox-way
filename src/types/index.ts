@@ -28,6 +28,7 @@ export interface Product {
   stock: number;
   image_url: string | null;
   sort_order: number;
+  market_unavailable: boolean;
 }
 
 export interface ShopType {
@@ -46,6 +47,8 @@ export interface Profile {
   first_name: string | null;
   last_name: string | null;
   full_name: string | null;
+  status: 'pending' | 'active' | 'rejected';
+  role: 'client' | 'admin';
   created_at: string;
 }
 
