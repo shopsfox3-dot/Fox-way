@@ -310,6 +310,7 @@ export default function LoginPage() {
               إرسال رمز التحقق
             </button>
 
+
             <p className="text-center text-sm text-slate-500 mt-4">
               ليس لديك حساب؟{' '}
               <button

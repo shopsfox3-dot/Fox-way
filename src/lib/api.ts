@@ -47,12 +47,6 @@ const MOCK_PRODUCTS: Product[] = [
   { id: 'p-8', category_id: 'cat-4', name: 'سائل جلي 1 لتر', description: 'سائل غسيل الصحون المركز', price: 180, unit: 'علبة', stock: 300, image_url: null, sort_order: 1, market_unavailable: false },
   { id: 'p-9', category_id: 'cat-5', name: 'شامبو 400 مل', description: 'شامبو لجميع أنواع الشعر', price: 250, unit: 'علبة', stock: 150, image_url: null, sort_order: 1, market_unavailable: false },
   { id: 'p-10', category_id: 'cat-6', name: 'أكياس بلاستيكية (500 قطعة)', description: 'أكياس متعددة الأحجام', price: 200, unit: 'علبة', stock: 300, image_url: null, sort_order: 1, market_unavailable: false },
-  { id: 'p-11', category_id: 'cat-5', name: 'فرشاة أسنان', description: 'فرشاة أسنان ناعمة للعناية اليومية', price: 150, unit: 'قطعة', stock: 120, image_url: null, sort_order: 5, market_unavailable: false },
-];
-
-const MOCK_PRODUCT_SHOP_TYPE_PRICES = [
-  { product_id: 'p-11', shop_type_id: 1, price: 175 }, // Pharmacy / صيدلية -> 175 DA
-  { product_id: 'p-11', shop_type_id: 3, price: 130 }, // Superette / سوبر ماركت -> 130 DA
 ];
 
 export async function fetchWilayas(): Promise<Wilaya[]> {
@@ -110,54 +104,19 @@ export async function fetchCategories(): Promise<Category[]> {
   }
 }
 
-export async function fetchProductsByCategory(categoryId: string, shopTypeId?: number | null): Promise<Product[]> {
+export async function fetchProductsByCategory(categoryId: string): Promise<Product[]> {
   try {
     const { data, error } = await supabase
       .from('products')
-      .select(`
-        *,
-        product_shop_type_prices (
-          price,
-          shop_type_id
-        )
-      `)
+      .select('*')
       .eq('category_id', categoryId)
       .order('sort_order');
-
     if (error || !data || data.length === 0) {
-      return MOCK_PRODUCTS.filter(p => p.category_id === categoryId).map((p) => {
-        const customPriceObj = MOCK_PRODUCT_SHOP_TYPE_PRICES.find(
-          (cp) => cp.product_id === p.id && cp.shop_type_id === shopTypeId
-        );
-        return {
-          ...p,
-          price: customPriceObj ? customPriceObj.price : p.price,
-        };
-      });
+      return MOCK_PRODUCTS.filter(p => p.category_id === categoryId);
     }
-
-    return data.map((p: any) => {
-      const customPriceObj = p.product_shop_type_prices?.find(
-        (pt: any) => pt.shop_type_id === shopTypeId
-      );
-      const resolvedPrice = customPriceObj ? Number(customPriceObj.price) : p.price;
-      
-      const { product_shop_type_prices, ...rest } = p;
-      return {
-        ...rest,
-        price: resolvedPrice,
-      } as Product;
-    });
+    return data as Product[];
   } catch {
-    return MOCK_PRODUCTS.filter(p => p.category_id === categoryId).map((p) => {
-      const customPriceObj = MOCK_PRODUCT_SHOP_TYPE_PRICES.find(
-        (cp) => cp.product_id === p.id && cp.shop_type_id === shopTypeId
-      );
-      return {
-        ...p,
-        price: customPriceObj ? customPriceObj.price : p.price,
-      };
-    });
+    return MOCK_PRODUCTS.filter(p => p.category_id === categoryId);
   }
 }
 

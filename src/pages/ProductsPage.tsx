@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { fetchProductsByCategory } from '@/lib/api';
 import { formatDA } from '@/lib/format';
 import { useCart } from '@/context/CartContext';
-import { useAuth } from '@/context/AuthContext';
 import type { Product } from '@/types';
 import { ArrowRight, Loader2, Plus, Minus, ShoppingCart, PackageX } from 'lucide-react';
 
@@ -17,14 +16,13 @@ export default function ProductsPage({ categoryId, categoryName, onBack }: Produ
   const [loading, setLoading] = useState(true);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const { addToCart } = useCart();
-  const { profile } = useAuth();
 
   useEffect(() => {
     setLoading(true);
-    fetchProductsByCategory(categoryId, profile?.shop_type_id)
+    fetchProductsByCategory(categoryId)
       .then(setProducts)
       .finally(() => setLoading(false));
-  }, [categoryId, profile?.shop_type_id]);
+  }, [categoryId]);
 
   const getQty = (productId: string) => quantities[productId] || 1;
 
