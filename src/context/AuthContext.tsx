@@ -83,9 +83,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         username: profile.full_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || undefined,
         phone: profile.phone || undefined,
         ip_address: '{{auto}}',
+        wilaya: profile.wilaya_code || undefined,
+        commune_id: profile.commune_id || undefined,
+        shop_type_id: profile.shop_type_id || undefined,
+        status: profile.status || undefined,
+        role: profile.role || undefined,
       });
+      Sentry.setTag('wilaya', profile.wilaya_code || 'none');
+      Sentry.setTag('shop_type', profile.shop_type_id?.toString() || 'none');
+      Sentry.setTag('role', profile.role || 'none');
     } else {
       Sentry.setUser(null);
+      Sentry.setTag('wilaya', null);
+      Sentry.setTag('shop_type', null);
+      Sentry.setTag('role', null);
     }
   }, [profile]);
 
