@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
+import * as Sentry from '@sentry/react';
 import { supabase } from '@/lib/supabase';
 import type { Profile } from '@/types';
 
@@ -74,6 +75,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })();
     }
   }, [session]);
+
+  useEffect(() => {
+    if (profile) {
+      Sentry.setUser({
+        id: profile.id,
+        username: profile.full_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || undefined,
+        phone: profile.phone || undefined,
+        ip_address: '{{auto}}',
+      });
+    } else {
+      Sentry.setUser(null);
+    }
+  }, [profile]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
