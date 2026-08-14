@@ -4,9 +4,68 @@ import { fetchWilayas, fetchCommunes, fetchShopTypes, upsertProfile, touchProfil
 import { useAuth } from '@/context/AuthContext';
 import type { Wilaya, Commune, ShopType } from '@/types';
 import {
-  MapPin, Phone, KeyRound, ChevronDown, Loader2, Store, User, Mail, Lock, Eye, EyeOff, CheckCircle2
+  MapPin, Phone, KeyRound, ChevronDown, Loader2, Store, User, Mail, Lock, Eye, EyeOff, CheckCircle2, Check
 } from 'lucide-react';
 import { GlassShell, DesignStyles } from '@/components/ui/DesignSystem';
+
+function CustomSelect({
+  value,
+  onChange,
+  options,
+  placeholder,
+  disabled = false,
+  icon: Icon,
+  inputClasses
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  options: { id: string; name: string }[];
+  placeholder: string;
+  disabled?: boolean;
+  icon?: any;
+  inputClasses: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const selectedOption = options.find((o) => o.id === value);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen(!open)}
+        className={`${inputClasses} flex items-center justify-between text-right appearance-none !pr-8 pl-2 disabled:opacity-50 text-ellipsis overflow-hidden whitespace-nowrap`}
+      >
+        <span className={selectedOption ? "text-white font-medium truncate" : "text-slate-400 font-normal truncate"}>
+          {selectedOption ? selectedOption.name : placeholder}
+        </span>
+        {Icon && <Icon className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />}
+        <ChevronDown className={`absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && !disabled && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute z-50 right-0 left-0 bottom-full mb-1 max-h-36 overflow-y-auto select-dropdown-scroll bg-slate-900 border border-teal-500/50 rounded-xl shadow-2xl p-1 text-right">
+            {options.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => { onChange(opt.id); setOpen(false); }}
+                className={`w-full text-right px-2.5 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-between gap-2 ${
+                  value === opt.id ? 'bg-teal-600 text-white font-bold' : 'text-slate-200 hover:bg-slate-800'
+                }`}
+              >
+                <span className="truncate">{opt.name}</span>
+                {value === opt.id && <Check className="w-3.5 h-3.5 text-white shrink-0" />}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function LoginPage() {
   const { refreshProfile } = useAuth();
@@ -141,8 +200,6 @@ export default function LoginPage() {
     setSelectedShopType('');
   };
 
-
-
   const inputClasses = DesignStyles.input;
   const labelClasses = DesignStyles.label;
 
@@ -165,55 +222,59 @@ export default function LoginPage() {
   };
 
   return (
-    <GlassShell title="Fox Way" subtitle="المنصة الأذكى لتوزيع الجملة">
+    <GlassShell
+      title="Fox Way"
+      subtitle="المنصة الأذكى لتوزيع الجملة"
+      maxWidth={mode === 'signin' ? "max-w-[360px] sm:max-w-[420px] md:max-w-[450px]" : "max-w-[340px] sm:max-w-[390px] md:max-w-[420px]"}
+    >
       <form onSubmit={(e) => e.preventDefault()} onKeyDown={handleKeyDown}>
         {mode === 'signin' ? (
         <>
-          <h2 className="text-2xl font-bold text-white mb-2">تسجيل الدخول</h2>
-          <p className="text-sm text-slate-300 mb-6">مرحباً بك مجدداً في متجر الجملة</p>
+          <h2 className="text-2xl font-bold text-white mb-1.5">تسجيل الدخول</h2>
+          <p className="text-sm text-slate-300 mb-5">مرحباً بك مجدداً في متجر الجملة</p>
 
-          <div className="space-y-5">
+          <div className="space-y-4">
             <div>
-              <label className={labelClasses}>البريد الإلكتروني</label>
+              <label className="block text-xs sm:text-sm font-semibold text-slate-200 mb-1">البريد الإلكتروني</label>
               <div className="relative">
-                <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                <Mail className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 pointer-events-none" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
-                  className={`${inputClasses} pr-10`}
+                  className={`${inputClasses} !py-2.5 sm:!py-3 !px-3.5 sm:!px-4 !pr-10 text-xs sm:text-sm`}
                   dir="ltr"
                 />
               </div>
             </div>
 
             <div>
-              <label className={labelClasses}>كلمة المرور</label>
+              <label className="block text-xs sm:text-sm font-semibold text-slate-200 mb-1">كلمة المرور</label>
               <div className="relative">
-                <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 pointer-events-none" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className={`${inputClasses} pr-10 pl-10`}
+                  className={`${inputClasses} !py-2.5 sm:!py-3 !px-3.5 sm:!px-4 !pr-10 !pl-12 sm:!pl-14 text-xs sm:text-sm`}
                   dir="ltr"
                 />
                 <button
                   type="button"
                   tabIndex={-1}
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-400 transition-colors"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-400 transition-colors p-1"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
           </div>
 
           {error && (
-            <div className="mt-4 rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+            <div className="mt-3.5 rounded-xl bg-red-500/10 border border-red-500/20 px-3.5 py-2.5 text-xs sm:text-sm text-red-400">
               {error}
             </div>
           )}
@@ -221,39 +282,40 @@ export default function LoginPage() {
           <button
             onClick={handleSignIn}
             disabled={!canSubmit() || loading}
-            className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-bold rounded-xl px-4 py-3 shadow-lg shadow-teal-500/30 hover:shadow-teal-500/50 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:-translate-y-0 mt-6 flex items-center justify-center gap-2"
+            className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-bold rounded-xl px-4 py-3 sm:py-3.5 shadow-lg shadow-teal-500/30 hover:shadow-teal-500/50 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:-translate-y-0 mt-5 flex items-center justify-center gap-2 text-sm sm:text-base"
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <KeyRound className="w-5 h-5" />}
+            {loading ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : <KeyRound className="w-4.5 h-4.5" />}
             تسجيل الدخول
           </button>
 
-          <p className="text-center text-sm text-slate-400 mt-6">
+          <p className="text-center text-xs sm:text-sm text-slate-400 mt-5">
             ليس لديك حساب بعد؟{' '}
             <button
               onClick={() => switchMode('signup')}
               className="font-bold text-teal-400 hover:text-teal-300 transition-colors"
             >
-              إنشاء حساب تاجر
+              إنشاء حساب
             </button>
           </p>
         </>
       ) : (
         <>
-          <h2 className="text-2xl font-bold text-white mb-2">إنشاء حساب جديد</h2>
-          <p className="text-sm text-slate-300 mb-6">انضم إلى شبكة توزيع Fox Way</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">إنشاء حساب جديد</h2>
+          <p className="text-xs sm:text-sm text-slate-300 mb-4">انضم إلى شبكة توزيع Fox Way</p>
 
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2.5">
+            {/* Row 1: Name & Surname */}
+            <div className="grid grid-cols-2 gap-2.5">
               <div>
                 <label className={labelClasses}>الاسم</label>
                 <div className="relative">
-                  <User className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                  <User className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                   <input
                     type="text"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     placeholder="الاسم"
-                    className={`${inputClasses} pr-10`}
+                    className={`${inputClasses} !pr-8`}
                   />
                 </div>
               </div>
@@ -269,152 +331,141 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div>
-              <label className={labelClasses}>البريد الإلكتروني</label>
-              <div className="relative">
-                <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  className={`${inputClasses} pr-10`}
-                  dir="ltr"
-                />
+            {/* Row 2: Email & Phone */}
+            <div className="grid grid-cols-2 gap-2.5">
+              <div>
+                <label className={labelClasses}>البريد الإلكتروني</label>
+                <div className="relative">
+                  <Mail className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@example.com"
+                    className={`${inputClasses} !pr-8`}
+                    dir="ltr"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className={labelClasses}>رقم الهاتف</label>
+                <div className="relative">
+                  <Phone className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, '').slice(0, 10))}
+                    placeholder="0612345678"
+                    className={`${inputClasses} !pr-8`}
+                    dir="ltr"
+                    style={{ textAlign: 'right' }}
+                  />
+                </div>
               </div>
             </div>
 
-            <div>
-              <label className={labelClasses}>كلمة المرور</label>
-              <div className="relative">
-                <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className={`${inputClasses} pr-10 pl-10`}
-                  dir="ltr"
-                />
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-400 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
+            {/* Row 3: Password & Confirm Password */}
+            <div className="grid grid-cols-2 gap-2.5">
+              <div>
+                <label className={labelClasses}>كلمة المرور</label>
+                <div className="relative">
+                  <Lock className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className={`${inputClasses} !pr-8 !pl-8`}
+                    dir="ltr"
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-400 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className={labelClasses}>تأكيد كلمة المرور</label>
+                <div className="relative">
+                  {password !== '' && password === confirmPassword ? (
+                    <CheckCircle2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400 animate-scale-in" />
+                  ) : (
+                    <Lock className={`absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 ${confirmPassword !== '' && password !== confirmPassword ? 'text-red-400' : 'text-slate-400'} pointer-events-none transition-colors`} />
+                  )}
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className={`${inputClasses} !pr-8 !pl-8 transition-all duration-300 ${
+                      password !== '' && password === confirmPassword 
+                        ? '!border-emerald-500/60 focus:!border-emerald-500 focus:!ring-2 focus:!ring-emerald-500/30 bg-emerald-500/10' 
+                        : confirmPassword !== '' && password !== confirmPassword 
+                        ? '!border-red-500/60 focus:!border-red-500 focus:!ring-2 focus:!ring-red-500/30 bg-red-500/10' 
+                        : ''
+                    }`}
+                    dir="ltr"
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-400 transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div>
-              <label className={labelClasses}>تأكيد كلمة المرور</label>
-              <div className="relative">
-                {password !== '' && password === confirmPassword ? (
-                  <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-400 animate-scale-in" />
-                ) : (
-                  <Lock className={`absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 ${confirmPassword !== '' && password !== confirmPassword ? 'text-red-400' : 'text-slate-400'} pointer-events-none transition-colors`} />
-                )}
-                <input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className={`${inputClasses} pr-10 pl-10 transition-all duration-300 ${
-                    password !== '' && password === confirmPassword 
-                      ? 'border-emerald-500/50 focus:border-emerald-500 focus:ring-emerald-500/20 bg-emerald-500/5' 
-                      : confirmPassword !== '' && password !== confirmPassword 
-                      ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/20 bg-red-500/5' 
-                      : ''
-                  }`}
-                  dir="ltr"
-                />
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-400 transition-colors"
-                >
-                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label className={labelClasses}>رقم الهاتف</label>
-              <div className="relative">
-                <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, '').slice(0, 10))}
-                  placeholder="06 12 34 56 78"
-                  className={`${inputClasses} pr-10`}
-                  dir="ltr"
-                  style={{ textAlign: 'right' }}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+            {/* Row 4: Wilaya & Commune */}
+            <div className="grid grid-cols-2 gap-2.5">
               <div>
                 <label className={labelClasses}>الولاية</label>
-                <div className="relative">
-                  <select
-                    value={selectedWilaya}
-                    onChange={(e) => setSelectedWilaya(e.target.value)}
-                    className={`${inputClasses} appearance-none pr-10 pl-3`}
-                  >
-                    <option value="">اختر الولاية</option>
-                    {wilayas.map((w) => (
-                      <option key={w.code} value={w.code}>{w.name}</option>
-                    ))}
-                  </select>
-                  <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
-                  <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                </div>
+                <CustomSelect
+                  value={selectedWilaya}
+                  onChange={setSelectedWilaya}
+                  options={wilayas.map((w) => ({ id: w.code, name: `${w.code} - ${w.name}` }))}
+                  placeholder="اختر الولاية"
+                  icon={MapPin}
+                  inputClasses={inputClasses}
+                />
               </div>
               <div>
                 <label className={labelClasses}>البلدية</label>
-                <div className="relative">
-                  <select
-                    value={selectedCommune}
-                    onChange={(e) => setSelectedCommune(e.target.value)}
-                    disabled={!selectedWilaya}
-                    className={`${inputClasses} appearance-none pr-10 pl-3 disabled:opacity-50`}
-                  >
-                    <option value="">اختر البلدية</option>
-                    {communes.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                  <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
-                  <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                </div>
+                <CustomSelect
+                  value={selectedCommune}
+                  onChange={setSelectedCommune}
+                  options={communes.map((c) => ({ id: String(c.id), name: c.name }))}
+                  placeholder="اختر البلدية"
+                  disabled={!selectedWilaya}
+                  icon={MapPin}
+                  inputClasses={inputClasses}
+                />
               </div>
             </div>
 
+            {/* Row 5: Shop Type */}
             <div>
               <label className={labelClasses}>نوع النشاط (المحل)</label>
-              <div className="relative">
-                <Store className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
-                <select
-                  value={selectedShopType}
-                  onChange={(e) => setSelectedShopType(e.target.value)}
-                  className={`${inputClasses} appearance-none pr-10 pl-10`}
-                >
-                  <option value="">اختر نشاطك التجاري</option>
-                  {shopTypes.map((st) => (
-                    <option key={st.id} value={st.id}>{st.name}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-              </div>
+              <CustomSelect
+                value={selectedShopType}
+                onChange={setSelectedShopType}
+                options={shopTypes.map((st) => ({ id: String(st.id), name: st.name }))}
+                placeholder="اختر نشاطك التجاري"
+                icon={Store}
+                inputClasses={inputClasses}
+              />
             </div>
           </div>
 
           {error && (
-            <div className="mt-4 rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+            <div className="mt-3 rounded-xl bg-red-500/10 border border-red-500/20 px-3 py-2 text-xs text-red-400">
               {error}
             </div>
           )}
@@ -422,13 +473,13 @@ export default function LoginPage() {
           <button
             onClick={handleSignUp}
             disabled={!canSubmit() || loading}
-            className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-bold rounded-xl px-4 py-3 shadow-lg shadow-teal-500/30 hover:shadow-teal-500/50 hover:-translate-y-0.5 transition-all disabled:opacity-50 mt-6 flex items-center justify-center gap-2"
+            className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-bold rounded-xl px-4 py-2.5 shadow-lg shadow-teal-500/30 hover:shadow-teal-500/50 hover:-translate-y-0.5 transition-all disabled:opacity-50 mt-4 flex items-center justify-center gap-2 text-xs sm:text-sm"
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <KeyRound className="w-5 h-5" />}
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
             إنشاء حساب
           </button>
 
-          <p className="text-center text-sm text-slate-400 mt-6">
+          <p className="text-center text-xs text-slate-400 mt-4">
             لديك حساب بالفعل؟{' '}
             <button
               onClick={() => switchMode('signin')}

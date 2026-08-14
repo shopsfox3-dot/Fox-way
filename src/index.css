@@ -8,10 +8,29 @@
   html {
     direction: rtl;
     font-family: 'Cairo', sans-serif;
+    overflow-x: hidden;
   }
   body {
     @apply bg-slate-50 text-slate-900 antialiased;
+    overflow-x: hidden;
   }
+}
+
+/* Explicitly enable text selection, copying (Copier), and pasting (Coller) everywhere on Mobile & Desktop */
+*, html, body, span, p, h1, h2, h3, h4, h5, h6, label, div {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  -webkit-touch-callout: default !important;
+}
+
+input, textarea {
+  user-select: auto !important;
+  -webkit-user-select: auto !important;
+  -moz-user-select: auto !important;
+  -ms-user-select: auto !important;
+  -webkit-touch-callout: default !important;
 }
 
 /* Fix browser autofill styling for dark theme / transparent inputs */
@@ -38,20 +57,54 @@ input:-webkit-autofill:active {
   }
 }
 
-/* Scrollbar styling */
+/* Complete Scrollbar Removal globally except select dropdowns */
+html, body, * {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}
+
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  display: none !important;  /* Chrome, Safari, Opera */
+  width: 0px !important;
+  height: 0px !important;
+  background: transparent !important;
 }
-::-webkit-scrollbar-track {
-  background: transparent;
+
+/* Explicit Scrollbar for select menus and option lists */
+select,
+select option,
+.select-dropdown-scroll {
+  -ms-overflow-style: auto !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #0d9488 #0f172a !important;
 }
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 9999px;
+
+select::-webkit-scrollbar,
+select option::-webkit-scrollbar,
+.select-dropdown-scroll::-webkit-scrollbar {
+  display: block !important;
+  width: 6px !important;
+  height: 6px !important;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+
+select::-webkit-scrollbar-track,
+select option::-webkit-scrollbar-track,
+.select-dropdown-scroll::-webkit-scrollbar-track {
+  background: #0f172a !important;
+  border-radius: 9999px !important;
+}
+
+select::-webkit-scrollbar-thumb,
+select option::-webkit-scrollbar-thumb,
+.select-dropdown-scroll::-webkit-scrollbar-thumb {
+  background: #0d9488 !important;
+  border-radius: 9999px !important;
+}
+
+select::-webkit-scrollbar-thumb:hover,
+select option::-webkit-scrollbar-thumb:hover,
+.select-dropdown-scroll::-webkit-scrollbar-thumb:hover {
+  background: #0f766e !important;
 }
 
 /* Animations */
