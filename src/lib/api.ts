@@ -1,23 +1,9 @@
 import { supabase } from '@/lib/supabase';
 import type { Wilaya, Commune, Category, Product, ShopType } from '@/types';
+import { ALL_WILAYAS, ALL_COMMUNES } from './algeria_data';
 
-const MOCK_WILAYAS: Wilaya[] = [
-  { id: 1, code: '16', name: 'الجزائر', sort_order: 1 },
-  { id: 2, code: '31', name: 'وهران', sort_order: 2 },
-  { id: 3, code: '25', name: 'قسنطينة', sort_order: 3 },
-  { id: 4, code: '06', name: 'بجاية', sort_order: 4 },
-  { id: 5, code: '13', name: 'تلمسان', sort_order: 5 },
-  { id: 6, code: '19', name: 'سطيف', sort_order: 6 },
-];
-
-const MOCK_COMMUNES: Commune[] = [
-  { id: 1, wilaya_code: '16', name: 'الجزائر الوسطى' },
-  { id: 2, wilaya_code: '16', name: 'باب الوادي' },
-  { id: 3, wilaya_code: '16', name: 'حسين داي' },
-  { id: 4, wilaya_code: '31', name: 'وهران' },
-  { id: 5, wilaya_code: '31', name: 'السانية' },
-  { id: 6, wilaya_code: '25', name: 'قسنطينة' },
-];
+const MOCK_WILAYAS: Wilaya[] = ALL_WILAYAS;
+const MOCK_COMMUNES: Commune[] = ALL_COMMUNES;
 
 const MOCK_SHOP_TYPES: ShopType[] = [
   { id: 1, name: 'صيدلية', icon: 'Pill', sort_order: 1 },
