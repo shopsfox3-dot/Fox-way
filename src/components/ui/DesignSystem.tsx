@@ -46,6 +46,7 @@ export const GlassShell = ({
 /**
  * تنسيقات مشتركة للحقول والنصوص لتسهيل إعادة الاستخدام
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const DesignStyles = {
   input: "w-full bg-slate-900/50 border border-white/15 rounded-xl px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-transparent transition-all",
   inputError: "border-red-500/50 focus:border-red-500 focus:ring-red-500/20",

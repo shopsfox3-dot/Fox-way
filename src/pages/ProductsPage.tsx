@@ -24,7 +24,7 @@ export default function ProductsPage({ categoryId, categoryName, onBack }: Produ
       .finally(() => setLoading(false));
   }, [categoryId]);
 
-  const getQty = (productId: string) => quantities[productId] || 1;
+  const getQty = useCallback((productId: string) => quantities[productId] || 1, [quantities]);
 
   const increment = useCallback((productId: string) => {
     setQuantities((prev) => ({ ...prev, [productId]: (prev[productId] || 1) + 1 }));
@@ -40,10 +40,10 @@ export default function ProductsPage({ categoryId, categoryName, onBack }: Produ
 
   const handleAdd = useCallback(
     (product: Product) => {
-      addToCart(product, getQty(product.id));
+      addToCart(product, quantities[product.id] || 1);
       setQuantities((prev) => ({ ...prev, [product.id]: 1 }));
     },
-    [addToCart, getQty]
+    [addToCart, quantities]
   );
 
   return (

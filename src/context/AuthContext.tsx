@@ -21,10 +21,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const setDemoSession = (customFirstName?: string, customPhone?: string) => {
-    const mockSession: any = {
+    const mockSession = {
       user: { id: 'demo-user-123', email: 'merchant@foxway.dz' },
       access_token: 'demo-token-123',
-    };
+      token_type: 'bearer',
+    } as unknown as Session;
     const mockProfile: Profile = {
       id: 'demo-user-123',
       phone: customPhone || '0612345678',

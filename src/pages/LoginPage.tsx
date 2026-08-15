@@ -22,7 +22,7 @@ function CustomSelect({
   options: { id: string; name: string }[];
   placeholder: string;
   disabled?: boolean;
-  icon?: any;
+  icon?: React.ElementType;
   inputClasses: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -34,30 +34,35 @@ function CustomSelect({
         type="button"
         disabled={disabled}
         onClick={() => setOpen(!open)}
-        className={`${inputClasses} flex items-center justify-between text-right appearance-none !pr-8 pl-2 disabled:opacity-50 text-ellipsis overflow-hidden whitespace-nowrap`}
+        className={`${inputClasses} flex items-center justify-between text-right cursor-pointer select-none`}
       >
-        <span className={selectedOption ? "text-white font-medium truncate" : "text-slate-400 font-normal truncate"}>
-          {selectedOption ? selectedOption.name : placeholder}
-        </span>
-        {Icon && <Icon className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />}
-        <ChevronDown className={`absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none transition-transform ${open ? 'rotate-180' : ''}`} />
+        <div className="flex items-center gap-2 overflow-hidden">
+          {Icon && <Icon className="w-4 h-4 text-slate-400 shrink-0" />}
+          <span className={`truncate ${selectedOption ? 'text-slate-800 font-medium' : 'text-slate-400'}`}>
+            {selectedOption ? selectedOption.name : placeholder}
+          </span>
+        </div>
+        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
-      {open && !disabled && (
+      {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute z-50 right-0 left-0 bottom-full mb-1 max-h-36 overflow-y-auto select-dropdown-scroll bg-slate-900 border border-teal-500/50 rounded-xl shadow-2xl p-1 text-right">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 max-h-48 overflow-y-auto py-1">
             {options.map((opt) => (
               <button
                 key={opt.id}
                 type="button"
-                onClick={() => { onChange(opt.id); setOpen(false); }}
-                className={`w-full text-right px-2.5 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-between gap-2 ${
-                  value === opt.id ? 'bg-teal-600 text-white font-bold' : 'text-slate-200 hover:bg-slate-800'
+                onClick={() => {
+                  onChange(opt.id);
+                  setOpen(false);
+                }}
+                className={`w-full text-right px-4 py-2.5 text-sm hover:bg-slate-50 transition-colors flex items-center justify-between ${
+                  opt.id === value ? 'bg-teal-50 text-teal-700 font-medium' : 'text-slate-700'
                 }`}
               >
-                <span className="truncate">{opt.name}</span>
-                {value === opt.id && <Check className="w-3.5 h-3.5 text-white shrink-0" />}
+                <span>{opt.name}</span>
+                {opt.id === value && <Check className="w-4 h-4 text-teal-600" />}
               </button>
             ))}
           </div>
@@ -133,23 +138,37 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
+      const cleanEmail = email.toLowerCase().trim();
+      
+      // 1. Try real Supabase Authentication
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
+        email: cleanEmail,
         password,
       });
-      if (signInError) {
-        // Fallback to demo login if Supabase auth fails in preview mode
-        setDemoSession('تاجر', fullPhone());
+      
+      if (!signInError) {
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData.user) {
+          await touchProfile(userData.user.id, fullPhone(), firstName.trim());
+        }
+        await refreshProfile();
         return;
       }
       
-      const { data: userData } = await supabase.auth.getUser();
-      if (userData.user) {
-        await touchProfile(userData.user.id, fullPhone(), firstName.trim());
+      // 2. Check registered accounts in persistent accounts registry
+      const accountsJson = localStorage.getItem('foxway_registered_accounts');
+      const registeredAccounts = accountsJson ? JSON.parse(accountsJson) : {};
+      const userAcc = registeredAccounts[cleanEmail];
+
+      if (userAcc && userAcc.password === password) {
+        setDemoSession(userAcc.firstName || 'تاجر', userAcc.phone || fullPhone());
+        return;
       }
-      await refreshProfile();
+
+      // If email is not registered or password doesn't match, strictly reject
+      setError('البريد الإلكتروني أو كلمة المرور غير صحيحة');
     } catch {
-      setDemoSession('تاجر', fullPhone());
+      setError('تعذر تسجيل الدخول، يرجى التأكد من صحة بياناتك');
     } finally {
       setLoading(false);
     }
@@ -159,24 +178,39 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
+      const cleanEmail = email.toLowerCase().trim();
+      
+      // 1. Register user in Supabase Auth & DB
       const { data } = await supabase.auth.signUp({
-        email,
+        email: cleanEmail,
         password,
       });
       
-      if (data?.user) {
-        await upsertProfile(
-          data.user.id,
-          fullPhone(),
-          selectedWilaya,
-          parseInt(selectedCommune, 10),
-          parseInt(selectedShopType, 10),
-          firstName.trim(),
-          lastName.trim()
-        );
-      }
+      const userId = data?.user?.id || `user-${Date.now()}`;
       
-      // Auto-enter app with demo session if email confirmation is pending
+      await upsertProfile(
+        userId,
+        fullPhone(),
+        selectedWilaya,
+        parseInt(selectedCommune, 10),
+        parseInt(selectedShopType, 10),
+        firstName.trim(),
+        lastName.trim()
+      );
+      
+      // 2. Register into persistent accounts registry
+      const accountsJson = localStorage.getItem('foxway_registered_accounts');
+      const registeredAccounts = accountsJson ? JSON.parse(accountsJson) : {};
+      registeredAccounts[cleanEmail] = {
+        email: cleanEmail,
+        password: password,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        phone: fullPhone()
+      };
+      localStorage.setItem('foxway_registered_accounts', JSON.stringify(registeredAccounts));
+      
+      // Log in as newly created merchant
       setDemoSession(firstName.trim() || 'تاجر', fullPhone());
     } catch {
       setDemoSession(firstName.trim() || 'تاجر', fullPhone());
@@ -210,8 +244,8 @@ export default function LoginPage() {
       if (target.tagName === 'BUTTON') return;
       e.preventDefault();
       const form = e.currentTarget;
-      const elements = Array.from(form.elements) as HTMLElement[];
-      const index = elements.indexOf(target);
+      const elements = Array.from(form.elements) as (HTMLInputElement | HTMLSelectElement | HTMLButtonElement)[];
+      const index = elements.indexOf(target as HTMLInputElement);
       if (index > -1) {
         let nextIndex = index + 1;
         while (nextIndex < elements.length && (elements[nextIndex].disabled || elements[nextIndex].tabIndex === -1)) {

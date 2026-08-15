@@ -47,8 +47,8 @@ export interface Profile {
   first_name: string | null;
   last_name: string | null;
   full_name: string | null;
-  status: 'pending' | 'active' | 'rejected';
-  role: 'client' | 'admin';
+  status: 'pending' | 'active' | 'rejected' | 'approved';
+  role: 'client' | 'admin' | 'merchant';
   created_at: string;
 }
 
