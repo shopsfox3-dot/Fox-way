@@ -1,12 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import {
   fetchAdminProfiles,
   updateProfileStatus,
   fetchShopTypes,
   fetchWilayas,
   fetchLoginAttempts,
+  deleteLoginAttempt,
+  clearAllLoginAttempts,
 } from '@/lib/api';
-import type { Profile, ShopType, Wilaya, LoginAttempt } from '@/types';
+import type { Profile, ShopType, Wilaya, Commune, LoginAttempt } from '@/types';
 import {
   Users,
   Clock,
@@ -24,6 +27,10 @@ import {
   ArrowRight,
   UserCheck,
   UserX,
+  Trash2,
+  Eye,
+  EyeOff,
+  KeyRound,
 } from 'lucide-react';
 
 interface AdminAccountsPageProps {
@@ -33,6 +40,7 @@ interface AdminAccountsPageProps {
 type TabType = 'pending' | 'approved' | 'rejected' | 'all' | 'security_logs';
 
 export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
+  const { profile: currentAdmin } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [shopTypes, setShopTypes] = useState<ShopType[]>([]);
   const [wilayas, setWilayas] = useState<Wilaya[]>([]);
@@ -44,12 +52,20 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
   const [activeTab, setActiveTab] = useState<TabType>('pending');
   const [searchTerm, setSearchTerm] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
+
+  const togglePasswordReveal = (id: string) => {
+    setRevealedPasswords((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const loadData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
 
     try {
+      const { ALL_COMMUNES } = await import('@/lib/algeria_data');
+      setAllCommunes(ALL_COMMUNES);
+
       const [pData, stData, wData, laData] = await Promise.all([
         fetchAdminProfiles('all'),
         fetchShopTypes(),
@@ -74,6 +90,12 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
   }, [loadData]);
 
   const handleStatusChange = async (profileId: string, newStatus: 'approved' | 'rejected' | 'pending') => {
+    if (profileId === currentAdmin?.id) {
+      setSuccessMessage('حماية الأمان: لا يمكنك تعديل أو حظر حسابك الحالي المسجل به');
+      setTimeout(() => setSuccessMessage(''), 4000);
+      return;
+    }
+
     setActionLoading(profileId);
     try {
       const success = await updateProfileStatus(profileId, newStatus);
@@ -90,6 +112,23 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
     }
   };
 
+  const handleDeleteAttempt = async (attemptId: string) => {
+    const ok = await deleteLoginAttempt(attemptId);
+    if (ok) {
+      setLoginAttempts((prev) => prev.filter((a) => a.id !== attemptId));
+    }
+  };
+
+  const handleClearAllAttempts = async () => {
+    if (!window.confirm('هل أنت متأكد من رغبتك في مسح جميع سجلات محاولات الدخول؟')) return;
+    const ok = await clearAllLoginAttempts();
+    if (ok) {
+      setLoginAttempts([]);
+      setSuccessMessage('تم مسح سجل محاولات الدخول بالكامل');
+      setTimeout(() => setSuccessMessage(''), 4000);
+    }
+  };
+
   // Helper mappings
   const getShopTypeName = (id: number | null) => {
     if (!id) return 'غير محدد';
@@ -97,23 +136,80 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
     return found ? found.name : `نشاط #${id}`;
   };
 
+  const formatPhone = (phone?: string | null) => {
+    if (!phone) return 'بدون هاتف';
+    let p = phone.trim().replace(/[^0-9]/g, '');
+    if (p.startsWith('213')) p = '0' + p.slice(3);
+    if (!p.startsWith('0') && p.length === 9) p = '0' + p;
+    return p;
+  };
+
+  const [allCommunes, setAllCommunes] = useState<Commune[]>([]);
+
   const getWilayaName = (code: string | null) => {
     if (!code) return 'غير محدد';
     const found = wilayas.find((w) => w.code === code);
     return found ? `${found.code} - ${found.name}` : code;
   };
 
-  const formatDate = (dateStr?: string) => {
-    if (!dateStr) return 'غير معروف';
+  const getCommuneName = (communeId?: number | null) => {
+    if (!communeId) return '';
+    const found = allCommunes.find((c) => c.id === communeId);
+    return found ? ` / ${found.name}` : '';
+  };
+
+  const parseDeviceInfo = (ua?: string) => {
+    if (!ua) return { text: 'جهاز غير معروف', icon: '💻' };
+    
+    let os = 'جهاز غير معروف';
+    let icon = '💻';
+    if (ua.includes('Windows')) { os = 'حاسوب ويندوز (Windows)'; icon = '💻'; }
+    else if (ua.includes('Macintosh') || ua.includes('Mac OS')) { os = 'حاسوب ماك (Mac)'; icon = '💻'; }
+    else if (ua.includes('Android')) { os = 'هاتف أندرويد (Android)'; icon = '📱'; }
+    else if (ua.includes('iPhone')) { os = 'هاتف آيفون (iPhone)'; icon = '📱'; }
+    else if (ua.includes('iPad')) { os = 'جهاز لوحي (iPad)'; icon = '📱'; }
+    else if (ua.includes('Linux')) { os = 'حاسوب لينكس (Linux)'; icon = '💻'; }
+
+    let browser = 'المتصفح';
+    if (ua.includes('Chrome') && !ua.includes('Edg/')) browser = 'Chrome';
+    else if (ua.includes('Edg/')) browser = 'Microsoft Edge';
+    else if (ua.includes('Firefox')) browser = 'Firefox';
+    else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+
+    return { text: `${os} • متصفح ${browser}`, icon };
+  };
+
+  const formatDate24h = (dateStr?: string) => {
+    if (!dateStr) return { full: 'غير معروف', relative: '' };
     try {
       const d = new Date(dateStr);
-      return new Intl.DateTimeFormat('ar-DZ', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-      }).format(d);
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const seconds = String(d.getSeconds()).padStart(2, '0');
+      
+      const now = new Date();
+      const diffMs = Math.max(0, now.getTime() - d.getTime());
+      const diffMins = Math.floor(diffMs / (1000 * 60));
+      let relative = '';
+      if (diffMins < 1) relative = 'الآن';
+      else if (diffMins < 60) relative = `منذ ${diffMins} دقيقة`;
+      else if (diffMins < 1440) relative = `منذ ${Math.floor(diffMins / 60)} ساعة`;
+      else relative = `منذ ${Math.floor(diffMins / 1440)} يوم`;
+
+      return {
+        full: `${year}/${month}/${day} - ${hours}:${minutes}:${seconds}`,
+        relative,
+      };
     } catch {
-      return dateStr;
+      return { full: dateStr, relative: '' };
     }
+  };
+
+  const formatDate = (dateStr?: string) => {
+    return formatDate24h(dateStr).full;
   };
 
   // Counts
@@ -135,6 +231,21 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
 
     return fullName.includes(term) || phone.includes(term) || wilaya.includes(term) || shop.includes(term);
   });
+
+  if (currentAdmin && currentAdmin.role !== 'admin') {
+    return (
+      <div className="max-w-md mx-auto my-16 p-8 bg-white rounded-3xl border border-red-200 text-center shadow-lg animate-scale-in">
+        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3 text-red-600">
+          <ShieldAlert className="w-6 h-6" />
+        </div>
+        <h2 className="text-lg font-bold text-slate-900 mb-1">غير مصرح لك بالدخول</h2>
+        <p className="text-xs text-slate-500 mb-5">هذه اللوحة مخصصة لإدارة النظام فقط.</p>
+        <button onClick={onBack} className="btn-primary w-full text-xs sm:text-sm">
+          العودة للمتجر
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
@@ -356,8 +467,20 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
         /* Security logs tab */
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-            <h2 className="font-bold text-slate-900 text-base">سجل محاولات تسجيل الدخول الفاشلة</h2>
-            <span className="text-xs text-slate-500">آخر 50 محاولة</span>
+            <div>
+              <h2 className="font-bold text-slate-900 text-base">سجل محاولات تسجيل الدخول الفاشلة</h2>
+              <span className="text-xs text-slate-500">إجمالي السجلات: {loginAttempts.length}</span>
+            </div>
+
+            {loginAttempts.length > 0 && (
+              <button
+                onClick={handleClearAllAttempts}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl text-xs font-bold transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>مسح السجل بالكامل</span>
+              </button>
+            )}
           </div>
 
           {loginAttempts.length === 0 ? (
@@ -367,23 +490,87 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
-              {loginAttempts.map((att) => (
-                <div key={att.id} className="p-4 hover:bg-slate-50/80 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-right">
-                  <div>
-                    <p className="font-semibold text-slate-900 text-sm">{att.email}</p>
-                    <p className="text-xs text-red-500 mt-0.5">{att.error_message || 'محاولة غير مصرح بها'}</p>
-                    {att.user_agent && (
-                      <p className="text-[11px] text-slate-400 truncate max-w-md mt-0.5" dir="ltr">{att.user_agent}</p>
-                    )}
+              {loginAttempts.map((att) => {
+                const device = parseDeviceInfo(att.user_agent);
+                const timeData = formatDate24h(att.attempted_at);
+                const statusLabel =
+                  att.status === 'invalid_credentials'
+                    ? 'بيانات خاطئة'
+                    : att.status === 'blocked_unapproved'
+                    ? 'حساب معلق'
+                    : 'محاولة فاشلة';
+
+                return (
+                  <div
+                    key={att.id}
+                    className="p-4 hover:bg-slate-50/80 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-right group"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-900 text-sm sm:text-base">{att.email}</span>
+                        <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-100 text-red-700 border border-red-200">
+                          {statusLabel}
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-red-600 font-medium">
+                        {att.error_message || 'تعذر تسجيل الدخول'}
+                      </p>
+
+                      {/* Attempted Password */}
+                      {att.attempted_password ? (
+                        <div className="flex items-center gap-2 text-xs bg-amber-50 border border-amber-200/80 px-2.5 py-1 rounded-lg w-fit text-amber-900">
+                          <KeyRound className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                          <span className="text-[11px] font-medium text-amber-700">كلمة السر المدخلة:</span>
+                          <span className="font-mono font-bold text-xs" dir="ltr">
+                            {revealedPasswords[att.id] ? att.attempted_password : '••••••••'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => togglePasswordReveal(att.id)}
+                            className="text-amber-700 hover:text-amber-900 transition-colors p-0.5"
+                            title={revealedPasswords[att.id] ? 'إخفاء' : 'إظهار كلمة السر'}
+                          >
+                            {revealedPasswords[att.id] ? (
+                              <EyeOff className="w-3.5 h-3.5" />
+                            ) : (
+                              <Eye className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        </div>
+                      ) : null}
+
+                      {/* Device name */}
+                      <div className="flex items-center gap-1.5 text-xs text-slate-600 bg-slate-100/80 px-2.5 py-1 rounded-lg w-fit">
+                        <span>{device.icon}</span>
+                        <span className="font-medium">{device.text}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center sm:flex-col sm:items-end justify-between gap-3 shrink-0">
+                      <div className="text-left sm:text-right">
+                        <span className="font-mono font-bold text-slate-700 text-xs sm:text-sm block" dir="ltr">
+                          {timeData.full}
+                        </span>
+                        {timeData.relative && (
+                          <span className="text-[11px] text-teal-600 font-semibold mt-0.5 inline-block">
+                            {timeData.relative}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Delete item button */}
+                      <button
+                        onClick={() => handleDeleteAttempt(att.id)}
+                        title="حذف هذا السجل"
+                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex sm:flex-col items-center sm:items-end justify-between text-xs text-slate-500">
-                    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-100 text-red-700">
-                      {att.status}
-                    </span>
-                    <span className="mt-1">{formatDate(att.attempted_at)}</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -407,6 +594,7 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
                 const isApproved = p.status === 'approved';
                 const isRejected = p.status === 'rejected';
                 const isLoadingAction = actionLoading === p.id;
+                const isSelf = !!currentAdmin?.id && p.id === currentAdmin.id;
 
                 const displayName = `${p.first_name || ''} ${p.last_name || ''}`.trim() || p.full_name || 'بدون اسم';
 
@@ -414,7 +602,9 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
                   <div
                     key={p.id}
                     className={`bg-white rounded-2xl border p-5 shadow-sm transition-all duration-200 flex flex-col justify-between ${
-                      isPending
+                      isSelf
+                        ? 'border-teal-400 bg-gradient-to-b from-teal-50/20 to-white shadow-md ring-2 ring-teal-500/20'
+                        : isPending
                         ? 'border-amber-200 hover:border-amber-400 hover:shadow-md'
                         : isApproved
                         ? 'border-slate-200 hover:border-emerald-300'
@@ -440,11 +630,16 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
                             {isPending ? 'طلب معلق' : isApproved ? 'حساب مفعّل' : 'حساب مرفوض'}
                           </span>
 
-                          {p.role === 'admin' && (
+                          {isSelf ? (
+                            <span className="bg-teal-100 text-teal-800 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full flex items-center gap-1 border border-teal-300">
+                              <ShieldCheck className="w-3 h-3 text-teal-600" />
+                              <span>حسابك الحالي (أنت) 👑</span>
+                            </span>
+                          ) : p.role === 'admin' ? (
                             <span className="bg-purple-100 text-purple-800 text-[11px] font-extrabold px-2 py-0.5 rounded-full">
                               مسؤول (Admin)
                             </span>
-                          )}
+                          ) : null}
                         </div>
 
                         <span className="text-[11px] text-slate-400 flex items-center gap-1">
@@ -462,11 +657,11 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
                         <div className="flex items-center gap-2">
                           <Phone className="w-3.5 h-3.5 text-teal-600 shrink-0" />
                           <a
-                            href={`tel:${p.phone}`}
+                            href={`tel:${formatPhone(p.phone)}`}
                             className="font-medium text-slate-800 hover:text-teal-600 transition-colors"
                             dir="ltr"
                           >
-                            {p.phone || 'بدون هاتف'}
+                            {formatPhone(p.phone)}
                           </a>
                         </div>
 
@@ -479,14 +674,19 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
                         {/* Location */}
                         <div className="flex items-center gap-2 sm:col-span-2">
                           <MapPin className="w-3.5 h-3.5 text-teal-600 shrink-0" />
-                          <span>{getWilayaName(p.wilaya_code)}</span>
+                          <span>{getWilayaName(p.wilaya_code)}{getCommuneName(p.commune_id)}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Action buttons */}
                     <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
-                      {isPending ? (
+                      {isSelf ? (
+                        <div className="flex-1 py-2.5 px-3 bg-teal-50 border border-teal-200 text-teal-800 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5">
+                          <ShieldCheck className="w-4 h-4 text-teal-600 shrink-0" />
+                          <span>حسابك الحالي النشط (محمي من الحظر والتعليق)</span>
+                        </div>
+                      ) : isPending ? (
                         <>
                           <button
                             onClick={() => handleStatusChange(p.id, 'approved')}

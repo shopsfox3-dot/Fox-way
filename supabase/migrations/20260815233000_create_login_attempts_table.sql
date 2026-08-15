@@ -29,3 +29,16 @@ CREATE POLICY "admin_read_login_attempts" ON login_attempts
       AND profiles.role = 'admin'
     )
   );
+
+-- Allow only admins to delete login attempt logs
+DROP POLICY IF EXISTS "admin_delete_login_attempts" ON login_attempts;
+CREATE POLICY "admin_delete_login_attempts" ON login_attempts
+  FOR DELETE TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.role = 'admin'
+    )
+  );
+

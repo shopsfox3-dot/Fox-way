@@ -87,7 +87,10 @@ export default function Header({ onNavigate, currentPage }: HeaderProps) {
           </button>
 
           <button
-            onClick={signOut}
+            onClick={() => {
+              onNavigate('home');
+              signOut();
+            }}
             className="p-2.5 rounded-xl text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors"
             aria-label="تسجيل الخروج"
           >

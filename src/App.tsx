@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 import LoginPage from '@/pages/LoginPage';
@@ -18,6 +18,19 @@ function AppContent() {
   const [selectedCategory, setSelectedCategory] = useState<{ id: string; name: string } | null>(
     null
   );
+
+  // Whenever the authenticated user changes, reset back to home
+  useEffect(() => {
+    setPage('home');
+    setSelectedCategory(null);
+  }, [session?.user?.id]);
+
+  // If a regular client somehow has page === 'admin', force return to home
+  useEffect(() => {
+    if (profile && profile.role !== 'admin' && page === 'admin') {
+      setPage('home');
+    }
+  }, [profile, page]);
 
   if (loading) {
     return (

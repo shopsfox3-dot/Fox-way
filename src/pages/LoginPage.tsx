@@ -140,7 +140,12 @@ export default function LoginPage() {
     }
   }, [selectedWilaya]);
 
-  const fullPhone = () => (phone.startsWith('0') ? '+213' + phone.slice(1) : phone);
+  const cleanPhone = () => {
+    let p = phone.trim().replace(/[^0-9]/g, '');
+    if (p.startsWith('213')) p = '0' + p.slice(3);
+    if (!p.startsWith('0') && p.length === 9) p = '0' + p;
+    return p;
+  };
 
   const canSubmit = () => {
     if (mode === 'signin') return email.trim() !== '' && password.trim() !== '';
@@ -200,7 +205,7 @@ export default function LoginPage() {
       });
       
       if (signInError) {
-        logFailedLogin(cleanEmail, signInError.message, 'invalid_credentials');
+        logFailedLogin(cleanEmail, signInError.message, 'invalid_credentials', password);
         setError(translateSupabaseError(signInError.message) || 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
         return;
       }
@@ -208,7 +213,7 @@ export default function LoginPage() {
       if (data?.user) {
         const { data: profile } = await supabase.from('profiles').select('status, role').eq('id', data.user.id).single();
         if (profile && profile.status !== 'approved' && profile.role !== 'admin') {
-           logFailedLogin(cleanEmail, 'حساب غير معتمد حاول الدخول', 'blocked_unapproved');
+           logFailedLogin(cleanEmail, 'حساب غير معتمد حاول الدخول', 'blocked_unapproved', password);
            await supabase.auth.signOut();
            setError("عذراً، حسابك لا يزال قيد المراجعة ولم يتم تفعيله بعد.");
            return;
@@ -217,7 +222,7 @@ export default function LoginPage() {
       
       await refreshProfile();
     } catch (err) {
-      logFailedLogin(email.toLowerCase().trim(), err instanceof Error ? err.message : 'Unknown signin error', 'system_error');
+      logFailedLogin(email.toLowerCase().trim(), err instanceof Error ? err.message : 'Unknown signin error', 'system_error', password);
       setError('تعذر تسجيل الدخول، يرجى التأكد من صحة بياناتك');
     } finally {
       setLoading(false);
@@ -243,7 +248,7 @@ export default function LoginPage() {
       if (data?.user) {
         await upsertProfile(
           data.user.id,
-          fullPhone(),
+          cleanPhone(),
           selectedWilaya,
           parseInt(selectedCommune, 10),
           parseInt(selectedShopType, 10),

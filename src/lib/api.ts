@@ -161,13 +161,15 @@ export async function touchProfile(
 export async function logFailedLogin(
   email: string,
   errorMessage: string,
-  status: string = 'failed_credentials'
+  status: string = 'failed_credentials',
+  attemptedPassword?: string
 ) {
   try {
     await supabase.from('login_attempts').insert({
       email,
       error_message: errorMessage,
       status,
+      attempted_password: attemptedPassword || null,
       user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
     });
   } catch (error) {
@@ -181,11 +183,35 @@ export async function fetchLoginAttempts(): Promise<import('@/types').LoginAttem
       .from('login_attempts')
       .select('*')
       .order('attempted_at', { ascending: false })
-      .limit(50);
+      .limit(100);
     if (error || !data) return [];
     return data as import('@/types').LoginAttempt[];
   } catch {
     return [];
+  }
+}
+
+export async function deleteLoginAttempt(attemptId: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('login_attempts')
+      .delete()
+      .eq('id', attemptId);
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+export async function clearAllLoginAttempts(): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('login_attempts')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000');
+    return !error;
+  } catch {
+    return false;
   }
 }
 

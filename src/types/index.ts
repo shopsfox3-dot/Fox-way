@@ -69,6 +69,7 @@ export interface LoginAttempt {
   id: string;
   email: string;
   attempted_at: string;
+  attempted_password?: string;
   ip_address?: string;
   user_agent?: string;
   error_message?: string;
