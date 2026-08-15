@@ -48,16 +48,29 @@ export async function fetchCommunes(wilayaCode: string): Promise<Commune[]> {
   }
 }
 
+const DEFAULT_SHOP_TYPES: ShopType[] = [
+  { id: 1, name: 'صيدلية', icon: 'Pill', sort_order: 1 },
+  { id: 2, name: 'كيوسك', icon: 'Newspaper', sort_order: 2 },
+  { id: 3, name: 'سوبر ماركت', icon: 'ShoppingCart', sort_order: 3 },
+  { id: 4, name: 'مستحضرات تجميل', icon: 'Sparkles', sort_order: 4 },
+  { id: 5, name: 'كانكاري', icon: 'Store', sort_order: 5 },
+  { id: 6, name: 'ملحمة', icon: 'Beef', sort_order: 6 },
+  { id: 7, name: 'مخبزة', icon: 'Croissant', sort_order: 7 },
+  { id: 8, name: 'مقهى', icon: 'Coffee', sort_order: 8 },
+  { id: 9, name: 'مطعم', icon: 'UtensilsCrossed', sort_order: 9 },
+  { id: 10, name: 'متجر متنوع', icon: 'Package', sort_order: 10 }
+];
+
 export async function fetchShopTypes(): Promise<ShopType[]> {
   try {
     const { data, error } = await supabase
       .from('shop_types')
       .select('*')
       .order('sort_order');
-    if (error || !data) return [];
+    if (error || !data || data.length === 0) return DEFAULT_SHOP_TYPES;
     return data as ShopType[];
   } catch {
-    return [];
+    return DEFAULT_SHOP_TYPES;
   }
 }
 

@@ -15,7 +15,8 @@ function CustomSelect({
   placeholder,
   disabled = false,
   icon: Icon,
-  inputClasses
+  inputClasses,
+  searchPlaceholder = 'ابحث...'
 }: {
   value: string;
   onChange: (val: string) => void;
@@ -24,16 +25,25 @@ function CustomSelect({
   disabled?: boolean;
   icon?: React.ElementType;
   inputClasses: string;
+  searchPlaceholder?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
   const selectedOption = options.find((o) => o.id === value);
+
+  const filtered = search.trim()
+    ? options.filter((o) => o.name.toLowerCase().includes(search.toLowerCase().trim()))
+    : options;
 
   return (
     <div className="relative">
       <button
         type="button"
         disabled={disabled}
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          setSearch('');
+          setOpen(!open);
+        }}
         className={`${inputClasses} flex items-center justify-between text-right appearance-none !pr-8 pl-2 disabled:opacity-50 text-ellipsis overflow-hidden whitespace-nowrap`}
       >
         <span className={selectedOption ? "text-white font-medium truncate" : "text-slate-400 font-normal truncate"}>
@@ -46,20 +56,38 @@ function CustomSelect({
       {open && !disabled && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute z-50 right-0 left-0 bottom-full mb-1 max-h-36 overflow-y-auto select-dropdown-scroll bg-slate-900 border border-teal-500/50 rounded-xl shadow-2xl p-1 text-right">
-            {options.map((opt) => (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => { onChange(opt.id); setOpen(false); }}
-                className={`w-full text-right px-2.5 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-between gap-2 ${
-                  value === opt.id ? 'bg-teal-600 text-white font-bold' : 'text-slate-200 hover:bg-slate-800'
-                }`}
-              >
-                <span className="truncate">{opt.name}</span>
-                {value === opt.id && <Check className="w-3.5 h-3.5 text-white shrink-0" />}
-              </button>
-            ))}
+          <div className="absolute z-50 right-0 left-0 bottom-full mb-1 max-h-52 flex flex-col bg-slate-900 border border-teal-500/50 rounded-xl shadow-2xl p-1.5 text-right">
+            {options.length > 5 && (
+              <div className="p-1 mb-1 border-b border-slate-800">
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={searchPlaceholder}
+                  className="w-full bg-slate-800 text-white placeholder-slate-400 text-xs rounded-lg px-2.5 py-1.5 outline-none border border-slate-700 focus:border-teal-500 text-right"
+                  autoFocus
+                />
+              </div>
+            )}
+            <div className="overflow-y-auto max-h-36 select-dropdown-scroll space-y-0.5">
+              {filtered.length === 0 ? (
+                <div className="text-center py-2 text-xs text-slate-400">لا توجد نتائج</div>
+              ) : (
+                filtered.map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => { onChange(opt.id); setOpen(false); }}
+                    className={`w-full text-right px-2.5 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-between gap-2 ${
+                      value === opt.id ? 'bg-teal-600 text-white font-bold' : 'text-slate-200 hover:bg-slate-800'
+                    }`}
+                  >
+                    <span className="truncate">{opt.name}</span>
+                    {value === opt.id && <Check className="w-3.5 h-3.5 text-white shrink-0" />}
+                  </button>
+                ))
+              )}
+            </div>
           </div>
         </>
       )}
