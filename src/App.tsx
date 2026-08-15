@@ -8,7 +8,9 @@ import CartPage from '@/pages/CartPage';
 import Header from '@/components/Header';
 import { Loader2 } from 'lucide-react';
 
-type Page = 'home' | 'products' | 'cart';
+import AdminAccountsPage from '@/pages/AdminAccountsPage';
+
+type Page = 'home' | 'products' | 'cart' | 'admin';
 
 function AppContent() {
   const { session, profile, loading, signOut } = useAuth();
@@ -38,7 +40,7 @@ function AppContent() {
     return <LoginPage />;
   }
 
-  const navigate = (target: 'home' | 'cart') => {
+  const navigate = (target: 'home' | 'cart' | 'admin') => {
     setPage(target);
   };
 
@@ -60,6 +62,7 @@ function AppContent() {
           />
         )}
         {page === 'cart' && <CartPage onBack={() => setPage('home')} />}
+        {page === 'admin' && <AdminAccountsPage onBack={() => setPage('home')} />}
       </main>
     </div>
   );

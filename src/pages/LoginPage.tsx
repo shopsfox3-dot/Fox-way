@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { fetchWilayas, fetchCommunes, fetchShopTypes, upsertProfile } from '@/lib/api';
+import { fetchWilayas, fetchCommunes, fetchShopTypes, upsertProfile, logFailedLogin } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import type { Wilaya, Commune, ShopType } from '@/types';
 import {
@@ -200,6 +200,7 @@ export default function LoginPage() {
       });
       
       if (signInError) {
+        logFailedLogin(cleanEmail, signInError.message, 'invalid_credentials');
         setError(translateSupabaseError(signInError.message) || 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
         return;
       }
@@ -207,6 +208,7 @@ export default function LoginPage() {
       if (data?.user) {
         const { data: profile } = await supabase.from('profiles').select('status, role').eq('id', data.user.id).single();
         if (profile && profile.status !== 'approved' && profile.role !== 'admin') {
+           logFailedLogin(cleanEmail, 'حساب غير معتمد حاول الدخول', 'blocked_unapproved');
            await supabase.auth.signOut();
            setError("عذراً، حسابك لا يزال قيد المراجعة ولم يتم تفعيله بعد.");
            return;
@@ -214,7 +216,8 @@ export default function LoginPage() {
       }
       
       await refreshProfile();
-    } catch {
+    } catch (err) {
+      logFailedLogin(email.toLowerCase().trim(), err instanceof Error ? err.message : 'Unknown signin error', 'system_error');
       setError('تعذر تسجيل الدخول، يرجى التأكد من صحة بياناتك');
     } finally {
       setLoading(false);

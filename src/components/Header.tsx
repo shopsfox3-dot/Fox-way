@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { ShoppingCart, Truck, LogOut, MapPin } from 'lucide-react';
+import { ShoppingCart, Truck, LogOut, MapPin, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { supabase } from '@/lib/supabase';
 
 interface HeaderProps {
-  onNavigate: (page: 'home' | 'cart') => void;
+  onNavigate: (page: 'home' | 'cart' | 'admin') => void;
   currentPage: string;
 }
 
@@ -13,6 +13,8 @@ export default function Header({ onNavigate, currentPage }: HeaderProps) {
   const { profile, signOut } = useAuth();
   const { totalItems } = useCart();
   const [wilayaName, setWilayaName] = useState<string | null>(null);
+
+  const isAdmin = profile?.role === 'admin';
 
   useEffect(() => {
     if (profile?.wilaya_code) {
@@ -53,6 +55,20 @@ export default function Header({ onNavigate, currentPage }: HeaderProps) {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
+          {isAdmin && (
+            <button
+              onClick={() => onNavigate(currentPage === 'admin' ? 'home' : 'admin')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                currentPage === 'admin'
+                  ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20'
+                  : 'bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-200'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>لوحة الأدمن</span>
+            </button>
+          )}
+
           <button
             onClick={() => onNavigate('cart')}
             className={`relative p-2.5 rounded-xl transition-colors ${

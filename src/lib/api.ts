@@ -157,3 +157,65 @@ export async function touchProfile(
     console.error('Error touching profile:', error);
   }
 }
+
+export async function logFailedLogin(
+  email: string,
+  errorMessage: string,
+  status: string = 'failed_credentials'
+) {
+  try {
+    await supabase.from('login_attempts').insert({
+      email,
+      error_message: errorMessage,
+      status,
+      user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+    });
+  } catch (error) {
+    console.error('Error logging failed login:', error);
+  }
+}
+
+export async function fetchLoginAttempts(): Promise<import('@/types').LoginAttempt[]> {
+  try {
+    const { data, error } = await supabase
+      .from('login_attempts')
+      .select('*')
+      .order('attempted_at', { ascending: false })
+      .limit(50);
+    if (error || !data) return [];
+    return data as import('@/types').LoginAttempt[];
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchAdminProfiles(statusFilter?: string): Promise<import('@/types').Profile[]> {
+  try {
+    let query = supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (statusFilter && statusFilter !== 'all') {
+      query = query.eq('status', statusFilter);
+    }
+
+    const { data, error } = await query;
+    if (error || !data) return [];
+    return data as import('@/types').Profile[];
+  } catch {
+    return [];
+  }
+}
+
+export async function updateProfileStatus(profileId: string, status: 'approved' | 'rejected' | 'pending'): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ status })
+      .eq('id', profileId);
+    return !error;
+  } catch {
+    return false;
+  }
+}

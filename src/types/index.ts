@@ -64,3 +64,14 @@ export interface Order {
   total: number;
   created_at: string;
 }
+
+export interface LoginAttempt {
+  id: string;
+  email: string;
+  attempted_at: string;
+  ip_address?: string;
+  user_agent?: string;
+  error_message?: string;
+  status: string;
+}
+
