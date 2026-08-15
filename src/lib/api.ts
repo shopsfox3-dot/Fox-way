@@ -1,35 +1,50 @@
 import { supabase } from '@/lib/supabase';
 import type { Wilaya, Commune, Category, Product, ShopType } from '@/types';
-import { ALL_WILAYAS, ALL_COMMUNES } from './algeria_data';
+
+// تحميل البيانات المحلية بشكل lazy لتقليل حجم الـ bundle الرئيسي
+async function getLocalWilayas(): Promise<Wilaya[]> {
+  const { ALL_WILAYAS } = await import('./algeria_data');
+  return ALL_WILAYAS;
+}
+async function getLocalCommunes(wilayaCode: string): Promise<Commune[]> {
+  const { ALL_COMMUNES } = await import('./algeria_data');
+  const codePadded = wilayaCode.padStart(2, '0');
+  return ALL_COMMUNES.filter(c => c.wilaya_code === wilayaCode || c.wilaya_code === codePadded);
+}
 
 export async function fetchWilayas(): Promise<Wilaya[]> {
   try {
     const { data, error } = await supabase
       .from('wilayas')
-      .select('*')
+      .select('code, name, sort_order')
       .order('sort_order');
-    if (error || !data || data.length < 69) return ALL_WILAYAS;
-    return data as Wilaya[];
+    if (error || !data || data.length < 10) return getLocalWilayas();
+    // DB wilayas use `code` as PK, map index to `id` for type compatibility
+    return data.map((w, i) => ({
+      id: i + 1,
+      code: w.code,
+      name: w.name,
+      sort_order: w.sort_order ?? i + 1,
+    })) as Wilaya[];
   } catch {
-    return ALL_WILAYAS;
+    return getLocalWilayas();
   }
 }
 
 export async function fetchCommunes(wilayaCode: string): Promise<Commune[]> {
   try {
+    const codePadded = wilayaCode.padStart(2, '0');
     const { data, error } = await supabase
       .from('communes')
-      .select('*')
-      .eq('wilaya_code', wilayaCode)
+      .select('id, wilaya_code, name')
+      .or(`wilaya_code.eq.${wilayaCode},wilaya_code.eq.${codePadded}`)
       .order('name');
     if (!error && data && data.length > 0) {
       return data as Commune[];
     }
-    const codePadded = wilayaCode.padStart(2, '0');
-    return ALL_COMMUNES.filter(c => c.wilaya_code === wilayaCode || c.wilaya_code === codePadded);
+    return getLocalCommunes(wilayaCode);
   } catch {
-    const codePadded = wilayaCode.padStart(2, '0');
-    return ALL_COMMUNES.filter(c => c.wilaya_code === wilayaCode || c.wilaya_code === codePadded);
+    return getLocalCommunes(wilayaCode);
   }
 }
 

@@ -1,7 +1,8 @@
+import { useState, useEffect } from 'react';
 import { ShoppingCart, Truck, LogOut, MapPin } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
-import { ALL_WILAYAS } from '@/lib/algeria_data';
+import { supabase } from '@/lib/supabase';
 
 interface HeaderProps {
   onNavigate: (page: 'home' | 'cart') => void;
@@ -11,9 +12,22 @@ interface HeaderProps {
 export default function Header({ onNavigate, currentPage }: HeaderProps) {
   const { profile, signOut } = useAuth();
   const { totalItems } = useCart();
-  const wilayaName = profile?.wilaya_code
-    ? (ALL_WILAYAS.find((w) => w.code === profile.wilaya_code)?.name ?? profile.wilaya_code)
-    : null;
+  const [wilayaName, setWilayaName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (profile?.wilaya_code) {
+      supabase
+        .from('wilayas')
+        .select('name')
+        .eq('code', profile.wilaya_code)
+        .maybeSingle()
+        .then(({ data }) => {
+          setWilayaName(data?.name || profile.wilaya_code);
+        });
+    } else {
+      setWilayaName(null);
+    }
+  }, [profile?.wilaya_code]);
 
   return (
     <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-lg border-b border-slate-200">
