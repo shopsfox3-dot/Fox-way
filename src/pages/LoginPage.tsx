@@ -129,6 +129,37 @@ export default function LoginPage() {
     );
   };
 
+  /**
+   * ترجمة رسائل خطأ Supabase إلى العربية
+   */
+  const translateSupabaseError = (message: string): string => {
+    const msg = message.toLowerCase();
+    if (msg.includes('for security purposes') || (msg.includes('after') && msg.includes('second'))) {
+      const match = message.match(/(\d+)\s*second/);
+      const seconds = match ? match[1] : 'بضع';
+      return `لأسباب أمنية، يرجى الانتظار ${seconds} ثانية قبل المحاولة مجدداً`;
+    }
+    if (msg.includes('invalid login credentials') || msg.includes('invalid credentials')) {
+      return 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+    }
+    if (msg.includes('email already registered') || msg.includes('user already registered')) {
+      return 'هذا البريد الإلكتروني مسجّل مسبقاً، جرّب تسجيل الدخول';
+    }
+    if (msg.includes('password should be at least')) {
+      return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+    }
+    if (msg.includes('email not confirmed')) {
+      return 'يرجى تأكيد بريدك الإلكتروني أولاً';
+    }
+    if (msg.includes('too many requests') || msg.includes('rate limit')) {
+      return 'تجاوزت الحد المسموح به من الطلبات، يرجى الانتظار قليلاً';
+    }
+    if (msg.includes('network') || msg.includes('fetch')) {
+      return 'تعذر الاتصال بالخادم، تحقق من اتصالك بالإنترنت';
+    }
+    return message;
+  };
+
   const handleSignIn = async () => {
     setLoading(true);
     setError('');
@@ -141,7 +172,7 @@ export default function LoginPage() {
       });
       
       if (signInError) {
-        setError(signInError.message || 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
+        setError(translateSupabaseError(signInError.message) || 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
         return;
       }
       
@@ -165,7 +196,7 @@ export default function LoginPage() {
       });
       
       if (signUpError) {
-        setError(signUpError.message || 'تعذر إنشاء الحساب');
+        setError(translateSupabaseError(signUpError.message) || 'تعذر إنشاء الحساب');
         return;
       }
       
