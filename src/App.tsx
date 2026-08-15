@@ -11,7 +11,7 @@ import { Loader2 } from 'lucide-react';
 type Page = 'home' | 'products' | 'cart';
 
 function AppContent() {
-  const { session, loading } = useAuth();
+  const { session, profile, loading, signOut } = useAuth();
   const [page, setPage] = useState<Page>('home');
   const [selectedCategory, setSelectedCategory] = useState<{ id: string; name: string } | null>(
     null
@@ -25,10 +25,18 @@ function AppContent() {
     );
   }
 
-  if (!session) {
-    return <LoginPage />;
+  // If they somehow have a session but are not approved, sign them out silently
+  const isApproved = profile?.status === 'approved' || profile?.role === 'admin';
+  if (session && profile && !isApproved) {
+    setTimeout(() => {
+      signOut();
+    }, 100);
   }
 
+  // Prevent flicker by always keeping LoginPage mounted until fully approved
+  if (!session || !profile || !isApproved) {
+    return <LoginPage />;
+  }
 
   const navigate = (target: 'home' | 'cart') => {
     setPage(target);

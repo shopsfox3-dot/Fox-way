@@ -122,6 +122,7 @@ export async function upsertProfile(
       shop_type_id: shopTypeId ?? null,
       first_name: firstName ?? null,
       last_name: lastName ?? null,
+      status: 'pending'
     });
   } catch (error) {
     console.error('Error updating profile:', error);

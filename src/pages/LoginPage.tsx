@@ -166,7 +166,7 @@ export default function LoginPage() {
     try {
       const cleanEmail = email.toLowerCase().trim();
       
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
         password,
       });
@@ -174,6 +174,15 @@ export default function LoginPage() {
       if (signInError) {
         setError(translateSupabaseError(signInError.message) || 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
         return;
+      }
+
+      if (data?.user) {
+        const { data: profile } = await supabase.from('profiles').select('status, role').eq('id', data.user.id).single();
+        if (profile && profile.status !== 'approved' && profile.role !== 'admin') {
+           await supabase.auth.signOut();
+           setError("عذراً، حسابك لا يزال قيد المراجعة ولم يتم تفعيله بعد.");
+           return;
+        }
       }
       
       await refreshProfile();
@@ -210,7 +219,10 @@ export default function LoginPage() {
           firstName.trim(),
           lastName.trim()
         );
-        await refreshProfile();
+        // طرد المستخدم فوراً وعرض الرسالة
+        await supabase.auth.signOut();
+        setMode('signin');
+        setError("تم استلام طلب تسجيل بنجاح سيتواصل معك دعم بعد 24 او 48 ساعة شكرا");
       }
     } catch {
       setError('حدث خطأ أثناء إنشاء الحساب');
