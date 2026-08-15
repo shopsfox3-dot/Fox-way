@@ -1,4 +1,6 @@
-export const ALL_WILAYAS = [
+import type { Wilaya, Commune } from '@/types';
+
+export const ALL_WILAYAS: Wilaya[] = [
   {
     "id": 1,
     "code": "01",
@@ -415,7 +417,7 @@ export const ALL_WILAYAS = [
   }
 ];
 
-export const ALL_COMMUNES = [
+export const ALL_COMMUNES: Commune[] = [
   {
     "id": 101,
     "wilaya_code": "01",
@@ -1012,7 +1014,7 @@ export const ALL_COMMUNES = [
     "name": "لازرو"
   },
   {
-    "id": 87921,
+    "id": 120,
     "wilaya_code": "05",
     "name": "لمسان"
   },
@@ -1207,7 +1209,7 @@ export const ALL_COMMUNES = [
     "name": "بني مليكش"
   },
   {
-    "id": 55713,
+    "id": 159,
     "wilaya_code": "06",
     "name": "بني معوش"
   },
@@ -1387,7 +1389,7 @@ export const ALL_COMMUNES = [
     "name": "تيمزريت"
   },
   {
-    "id": 45537,
+    "id": 195,
     "wilaya_code": "06",
     "name": "تينبدار"
   },
@@ -1482,7 +1484,7 @@ export const ALL_COMMUNES = [
     "name": "مخادمة"
   },
   {
-    "id": 85566,
+    "id": 214,
     "wilaya_code": "07",
     "name": "المزيرعة"
   },
@@ -1917,12 +1919,12 @@ export const ALL_COMMUNES = [
     "name": "تاقديت"
   },
   {
-    "id": 72133,
+    "id": 301,
     "wilaya_code": "10",
     "name": "زبربر"
   },
   {
-    "id": 76952,
+    "id": 302,
     "wilaya_code": "11",
     "name": "ابلسة"
   },
@@ -2892,7 +2894,7 @@ export const ALL_COMMUNES = [
     "name": "بئر خادم"
   },
   {
-    "id": 24171,
+    "id": 496,
     "wilaya_code": "16",
     "name": "بولوغين بن زيري"
   },
@@ -3027,7 +3029,7 @@ export const ALL_COMMUNES = [
     "name": "المعالمة"
   },
   {
-    "id": 35389,
+    "id": 523,
     "wilaya_code": "16",
     "name": "محمد بلوزداد"
   },
@@ -3267,7 +3269,7 @@ export const ALL_COMMUNES = [
     "name": "الامير عبد القادر"
   },
   {
-    "id": 99108,
+    "id": 571,
     "wilaya_code": "18",
     "name": "أراقن سويسي"
   },
@@ -4202,7 +4204,7 @@ export const ALL_COMMUNES = [
     "name": "البوني"
   },
   {
-    "id": 99862,
+    "id": 758,
     "wilaya_code": "23",
     "name": "العلمة"
   },
@@ -6977,7 +6979,7 @@ export const ALL_COMMUNES = [
     "name": "المساعيد"
   },
   {
-    "id": 76878,
+    "id": 1313,
     "wilaya_code": "46",
     "name": "الأمير عبد القادر"
   },
@@ -7357,7 +7359,7 @@ export const ALL_COMMUNES = [
     "name": "بسباس"
   },
   {
-    "id": 4810,
+    "id": 1389,
     "wilaya_code": "51",
     "name": "الشعيبة"
   },
@@ -7727,7 +7729,7 @@ export const ALL_COMMUNES = [
     "name": "نقرين"
   },
   {
-    "id": 79997,
+    "id": 1463,
     "wilaya_code": "63",
     "name": "البويهي"
   },
@@ -8037,7 +8039,7 @@ export const ALL_COMMUNES = [
     "name": "امجدل"
   },
   {
-    "id": 33024,
+    "id": 1525,
     "wilaya_code": "68",
     "name": "مناعة"
   },
@@ -8062,7 +8064,7 @@ export const ALL_COMMUNES = [
     "name": "ولتام"
   },
   {
-    "id": 47637,
+    "id": 1530,
     "wilaya_code": "68",
     "name": "سيدي عامر"
   },

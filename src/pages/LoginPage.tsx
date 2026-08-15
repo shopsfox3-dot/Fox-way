@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { fetchWilayas, fetchCommunes, fetchShopTypes, upsertProfile, touchProfile } from '@/lib/api';
+import { fetchWilayas, fetchCommunes, fetchShopTypes, upsertProfile } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import type { Wilaya, Commune, ShopType } from '@/types';
 import {
@@ -34,35 +34,30 @@ function CustomSelect({
         type="button"
         disabled={disabled}
         onClick={() => setOpen(!open)}
-        className={`${inputClasses} flex items-center justify-between text-right cursor-pointer select-none`}
+        className={`${inputClasses} flex items-center justify-between text-right appearance-none !pr-8 pl-2 disabled:opacity-50 text-ellipsis overflow-hidden whitespace-nowrap`}
       >
-        <div className="flex items-center gap-2 overflow-hidden">
-          {Icon && <Icon className="w-4 h-4 text-slate-400 shrink-0" />}
-          <span className={`truncate ${selectedOption ? 'text-slate-800 font-medium' : 'text-slate-400'}`}>
-            {selectedOption ? selectedOption.name : placeholder}
-          </span>
-        </div>
-        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <span className={selectedOption ? "text-white font-medium truncate" : "text-slate-400 font-normal truncate"}>
+          {selectedOption ? selectedOption.name : placeholder}
+        </span>
+        {Icon && <Icon className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />}
+        <ChevronDown className={`absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
-      {open && (
+      {open && !disabled && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 max-h-48 overflow-y-auto py-1">
+          <div className="absolute z-50 right-0 left-0 bottom-full mb-1 max-h-36 overflow-y-auto select-dropdown-scroll bg-slate-900 border border-teal-500/50 rounded-xl shadow-2xl p-1 text-right">
             {options.map((opt) => (
               <button
                 key={opt.id}
                 type="button"
-                onClick={() => {
-                  onChange(opt.id);
-                  setOpen(false);
-                }}
-                className={`w-full text-right px-4 py-2.5 text-sm hover:bg-slate-50 transition-colors flex items-center justify-between ${
-                  opt.id === value ? 'bg-teal-50 text-teal-700 font-medium' : 'text-slate-700'
+                onClick={() => { onChange(opt.id); setOpen(false); }}
+                className={`w-full text-right px-2.5 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-between gap-2 ${
+                  value === opt.id ? 'bg-teal-600 text-white font-bold' : 'text-slate-200 hover:bg-slate-800'
                 }`}
               >
-                <span>{opt.name}</span>
-                {opt.id === value && <Check className="w-4 h-4 text-teal-600" />}
+                <span className="truncate">{opt.name}</span>
+                {value === opt.id && <Check className="w-3.5 h-3.5 text-white shrink-0" />}
               </button>
             ))}
           </div>
@@ -73,7 +68,7 @@ function CustomSelect({
 }
 
 export default function LoginPage() {
-  const { refreshProfile, setDemoSession } = useAuth();
+  const { refreshProfile } = useAuth();
   
   // App modes
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
@@ -140,33 +135,17 @@ export default function LoginPage() {
     try {
       const cleanEmail = email.toLowerCase().trim();
       
-      // 1. Try real Supabase Authentication
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
         password,
       });
       
-      if (!signInError) {
-        const { data: userData } = await supabase.auth.getUser();
-        if (userData.user) {
-          await touchProfile(userData.user.id, fullPhone(), firstName.trim());
-        }
-        await refreshProfile();
+      if (signInError) {
+        setError(signInError.message || 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
         return;
       }
       
-      // 2. Check registered accounts in persistent accounts registry
-      const accountsJson = localStorage.getItem('foxway_registered_accounts');
-      const registeredAccounts = accountsJson ? JSON.parse(accountsJson) : {};
-      const userAcc = registeredAccounts[cleanEmail];
-
-      if (userAcc && userAcc.password === password) {
-        setDemoSession(userAcc.firstName || 'تاجر', userAcc.phone || fullPhone());
-        return;
-      }
-
-      // If email is not registered or password doesn't match, strictly reject
-      setError('البريد الإلكتروني أو كلمة المرور غير صحيحة');
+      await refreshProfile();
     } catch {
       setError('تعذر تسجيل الدخول، يرجى التأكد من صحة بياناتك');
     } finally {
@@ -180,40 +159,30 @@ export default function LoginPage() {
     try {
       const cleanEmail = email.toLowerCase().trim();
       
-      // 1. Register user in Supabase Auth & DB
-      const { data } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
       });
       
-      const userId = data?.user?.id || `user-${Date.now()}`;
+      if (signUpError) {
+        setError(signUpError.message || 'تعذر إنشاء الحساب');
+        return;
+      }
       
-      await upsertProfile(
-        userId,
-        fullPhone(),
-        selectedWilaya,
-        parseInt(selectedCommune, 10),
-        parseInt(selectedShopType, 10),
-        firstName.trim(),
-        lastName.trim()
-      );
-      
-      // 2. Register into persistent accounts registry
-      const accountsJson = localStorage.getItem('foxway_registered_accounts');
-      const registeredAccounts = accountsJson ? JSON.parse(accountsJson) : {};
-      registeredAccounts[cleanEmail] = {
-        email: cleanEmail,
-        password: password,
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        phone: fullPhone()
-      };
-      localStorage.setItem('foxway_registered_accounts', JSON.stringify(registeredAccounts));
-      
-      // Log in as newly created merchant
-      setDemoSession(firstName.trim() || 'تاجر', fullPhone());
+      if (data?.user) {
+        await upsertProfile(
+          data.user.id,
+          fullPhone(),
+          selectedWilaya,
+          parseInt(selectedCommune, 10),
+          parseInt(selectedShopType, 10),
+          firstName.trim(),
+          lastName.trim()
+        );
+        await refreshProfile();
+      }
     } catch {
-      setDemoSession(firstName.trim() || 'تاجر', fullPhone());
+      setError('حدث خطأ أثناء إنشاء الحساب');
     } finally {
       setLoading(false);
     }

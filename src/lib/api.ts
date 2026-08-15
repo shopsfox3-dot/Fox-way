@@ -2,49 +2,16 @@ import { supabase } from '@/lib/supabase';
 import type { Wilaya, Commune, Category, Product, ShopType } from '@/types';
 import { ALL_WILAYAS, ALL_COMMUNES } from './algeria_data';
 
-const MOCK_WILAYAS: Wilaya[] = ALL_WILAYAS;
-const MOCK_COMMUNES: Commune[] = ALL_COMMUNES;
-
-const MOCK_SHOP_TYPES: ShopType[] = [
-  { id: 1, name: 'صيدلية', icon: 'Pill', sort_order: 1 },
-  { id: 2, name: 'كيوسك', icon: 'Newspaper', sort_order: 2 },
-  { id: 3, name: 'سوبر ماركت', icon: 'ShoppingCart', sort_order: 3 },
-  { id: 4, name: 'مستحضرات تجميل', icon: 'Sparkles', sort_order: 4 },
-  { id: 5, name: 'كانكاري', icon: 'Store', sort_order: 5 },
-];
-
-const MOCK_CATEGORIES: Category[] = [
-  { id: 'cat-1', name: 'مواد غذائية', icon: 'ShoppingBasket', sort_order: 1 },
-  { id: 'cat-2', name: 'مشروبات', icon: 'Coffee', sort_order: 2 },
-  { id: 'cat-3', name: 'منتجات الأطفال', icon: 'Baby', sort_order: 3 },
-  { id: 'cat-4', name: 'منظفات', icon: 'Sparkles', sort_order: 4 },
-  { id: 'cat-5', name: 'عناية شخصية', icon: 'HeartHandshake', sort_order: 5 },
-  { id: 'cat-6', name: 'متجر متعدد', icon: 'Package', sort_order: 6 },
-];
-
-const MOCK_PRODUCTS: Product[] = [
-  { id: 'p-1', category_id: 'cat-1', name: 'زيت المائدة 5 لتر', description: 'زيت نباتي مكرر للتعبئة', price: 850, unit: 'علبة', stock: 200, image_url: null, sort_order: 1, market_unavailable: false },
-  { id: 'p-2', category_id: 'cat-1', name: 'سميد متوسط 5 كغ', description: 'سميد من القمح الصلب', price: 450, unit: 'كيس', stock: 150, image_url: null, sort_order: 2, market_unavailable: false },
-  { id: 'p-3', category_id: 'cat-1', name: 'طحين فاخر 25 كغ', description: 'طحين أبيض فاخر للخبز', price: 1200, unit: 'كيس', stock: 100, image_url: null, sort_order: 3, market_unavailable: false },
-  { id: 'p-4', category_id: 'cat-1', name: 'سكر أبيض 5 كغ', description: 'سكر مكرر حبيبات', price: 375, unit: 'كيس', stock: 300, image_url: null, sort_order: 4, market_unavailable: false },
-  { id: 'p-5', category_id: 'cat-2', name: 'ماء معدني 1.5 لتر (12 حبة)', description: 'علبة ماء معدني طبيعي', price: 180, unit: 'علبة', stock: 400, image_url: null, sort_order: 1, market_unavailable: false },
-  { id: 'p-6', category_id: 'cat-2', name: 'عصير مشكل 1 لتر', description: 'عصير فواكه مشكل طبيعي', price: 120, unit: 'علبة', stock: 250, image_url: null, sort_order: 2, market_unavailable: false },
-  { id: 'p-7', category_id: 'cat-3', name: 'حفاضات حجم 4 (60 قطعة)', description: 'حفاضات أطفال قطن ناعم', price: 750, unit: 'علبة', stock: 100, image_url: null, sort_order: 1, market_unavailable: false },
-  { id: 'p-8', category_id: 'cat-4', name: 'سائل جلي 1 لتر', description: 'سائل غسيل الصحون المركز', price: 180, unit: 'علبة', stock: 300, image_url: null, sort_order: 1, market_unavailable: false },
-  { id: 'p-9', category_id: 'cat-5', name: 'شامبو 400 مل', description: 'شامبو لجميع أنواع الشعر', price: 250, unit: 'علبة', stock: 150, image_url: null, sort_order: 1, market_unavailable: false },
-  { id: 'p-10', category_id: 'cat-6', name: 'أكياس بلاستيكية (500 قطعة)', description: 'أكياس متعددة الأحجام', price: 200, unit: 'علبة', stock: 300, image_url: null, sort_order: 1, market_unavailable: false },
-];
-
 export async function fetchWilayas(): Promise<Wilaya[]> {
   try {
     const { data, error } = await supabase
       .from('wilayas')
       .select('*')
       .order('sort_order');
-    if (error || !data || data.length === 0) return MOCK_WILAYAS;
+    if (error || !data || data.length < 69) return ALL_WILAYAS;
     return data as Wilaya[];
   } catch {
-    return MOCK_WILAYAS;
+    return ALL_WILAYAS;
   }
 }
 
@@ -55,12 +22,14 @@ export async function fetchCommunes(wilayaCode: string): Promise<Commune[]> {
       .select('*')
       .eq('wilaya_code', wilayaCode)
       .order('name');
-    if (error || !data || data.length === 0) {
-      return MOCK_COMMUNES.filter(c => c.wilaya_code === wilayaCode);
+    if (!error && data && data.length > 0) {
+      return data as Commune[];
     }
-    return data as Commune[];
+    const codePadded = wilayaCode.padStart(2, '0');
+    return ALL_COMMUNES.filter(c => c.wilaya_code === wilayaCode || c.wilaya_code === codePadded);
   } catch {
-    return MOCK_COMMUNES.filter(c => c.wilaya_code === wilayaCode);
+    const codePadded = wilayaCode.padStart(2, '0');
+    return ALL_COMMUNES.filter(c => c.wilaya_code === wilayaCode || c.wilaya_code === codePadded);
   }
 }
 
@@ -70,10 +39,10 @@ export async function fetchShopTypes(): Promise<ShopType[]> {
       .from('shop_types')
       .select('*')
       .order('sort_order');
-    if (error || !data || data.length === 0) return MOCK_SHOP_TYPES;
+    if (error || !data) return [];
     return data as ShopType[];
   } catch {
-    return MOCK_SHOP_TYPES;
+    return [];
   }
 }
 
@@ -83,10 +52,10 @@ export async function fetchCategories(): Promise<Category[]> {
       .from('categories')
       .select('*')
       .order('sort_order');
-    if (error || !data || data.length === 0) return MOCK_CATEGORIES;
+    if (error || !data) return [];
     return data as Category[];
   } catch {
-    return MOCK_CATEGORIES;
+    return [];
   }
 }
 
@@ -97,12 +66,10 @@ export async function fetchProductsByCategory(categoryId: string): Promise<Produ
       .select('*')
       .eq('category_id', categoryId)
       .order('sort_order');
-    if (error || !data || data.length === 0) {
-      return MOCK_PRODUCTS.filter(p => p.category_id === categoryId);
-    }
+    if (error || !data) return [];
     return data as Product[];
   } catch {
-    return MOCK_PRODUCTS.filter(p => p.category_id === categoryId);
+    return [];
   }
 }
 
@@ -111,24 +78,14 @@ export async function fetchProductCountByCategory(): Promise<Record<string, numb
     const { data, error } = await supabase
       .from('products')
       .select('category_id');
-    if (error || !data || data.length === 0) {
-      const counts: Record<string, number> = {};
-      MOCK_PRODUCTS.forEach((row) => {
-        counts[row.category_id] = (counts[row.category_id] || 0) + 1;
-      });
-      return counts;
-    }
+    if (error || !data) return {};
     const counts: Record<string, number> = {};
     (data as { category_id: string }[]).forEach((row) => {
       counts[row.category_id] = (counts[row.category_id] || 0) + 1;
     });
     return counts;
   } catch {
-    const counts: Record<string, number> = {};
-    MOCK_PRODUCTS.forEach((row) => {
-      counts[row.category_id] = (counts[row.category_id] || 0) + 1;
-    });
-    return counts;
+    return {};
   }
 }
 
@@ -151,8 +108,8 @@ export async function upsertProfile(
       first_name: firstName ?? null,
       last_name: lastName ?? null,
     });
-  } catch {
-    // Ignore error in preview mode
+  } catch (error) {
+    console.error('Error updating profile:', error);
   }
 }
 
@@ -167,7 +124,7 @@ export async function touchProfile(
       phone,
       first_name: firstName ?? null,
     }, { onConflict: 'id' });
-  } catch {
-    // Ignore error in preview mode
+  } catch (error) {
+    console.error('Error touching profile:', error);
   }
 }

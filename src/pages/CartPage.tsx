@@ -28,6 +28,14 @@ export default function CartPage({ onBack }: CartPageProps) {
 
   const handlePlaceOrder = async () => {
     if (!session?.user || items.length === 0) return;
+
+    // Check stock before placing order
+    const outOfStock = items.filter((item) => item.product.stock === 0);
+    if (outOfStock.length > 0) {
+      setError(`المنتجات التالية غير متوفرة في المخزون: ${outOfStock.map((i) => i.product.name).join('، ')}`);
+      return;
+    }
+
     setSubmitting(true);
     setError('');
     try {

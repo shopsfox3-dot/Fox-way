@@ -129,7 +129,8 @@ export default function ProductsPage({ categoryId, categoryName, onBack }: Produ
 
                   <button
                     onClick={() => handleAdd(product)}
-                    className="flex-1 btn-primary flex items-center justify-center gap-2 text-sm py-2.5"
+                    disabled={product.stock === 0}
+                    className="flex-1 btn-primary flex items-center justify-center gap-2 text-sm py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <ShoppingCart className="w-4 h-4" />
                     أضف للسلة
