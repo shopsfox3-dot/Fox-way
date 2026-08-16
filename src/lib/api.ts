@@ -101,6 +101,22 @@ export async function fetchProductsByCategory(categoryId: string): Promise<Produ
   }
 }
 
+export async function searchAllProducts(query: string): Promise<Product[]> {
+  try {
+    const trimmed = query.trim();
+    if (!trimmed) return [];
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .or(`name.ilike.%${trimmed}%,description.ilike.%${trimmed}%`)
+      .order('sort_order');
+    if (error || !data) return [];
+    return data as Product[];
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchProductCountByCategory(): Promise<Record<string, number>> {
   try {
     const { data, error } = await supabase

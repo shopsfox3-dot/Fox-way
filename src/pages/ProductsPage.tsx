@@ -1,9 +1,9 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { fetchProductsByCategory } from '@/lib/api';
 import { formatDA } from '@/lib/format';
 import { useCart } from '@/context/CartContext';
 import type { Product } from '@/types';
-import { ArrowRight, Loader2, Plus, Minus, ShoppingCart, PackageX } from 'lucide-react';
+import { ArrowRight, Loader2, Plus, Minus, ShoppingCart, PackageX, Search, X } from 'lucide-react';
 
 interface ProductsPageProps {
   categoryId: string;
@@ -14,15 +14,27 @@ interface ProductsPageProps {
 export default function ProductsPage({ categoryId, categoryName, onBack }: ProductsPageProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterTerm, setFilterTerm] = useState('');
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const { addToCart } = useCart();
 
   useEffect(() => {
     setLoading(true);
+    setFilterTerm('');
     fetchProductsByCategory(categoryId)
       .then(setProducts)
       .finally(() => setLoading(false));
   }, [categoryId]);
+
+  const filteredProducts = useMemo(() => {
+    if (!filterTerm.trim()) return products;
+    const term = filterTerm.toLowerCase();
+    return products.filter(
+      (p) =>
+        p.name.toLowerCase().includes(term) ||
+        (p.description || '').toLowerCase().includes(term)
+    );
+  }, [products, filterTerm]);
 
   const getQty = useCallback((productId: string) => quantities[productId] || 1, [quantities]);
 
@@ -57,11 +69,35 @@ export default function ProductsPage({ categoryId, categoryName, onBack }: Produ
         <span>العودة للأقسام</span>
       </button>
 
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">{categoryName}</h1>
-        <p className="text-slate-500 text-sm mt-1">
-          {loading ? '...' : `${products.length} منتج متوفر`}
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">{categoryName}</h1>
+          <p className="text-slate-500 text-sm mt-1">
+            {loading ? '...' : `${filteredProducts.length} من إجمالي ${products.length} منتج`}
+          </p>
+        </div>
+
+        {/* Search in category */}
+        {products.length > 0 && (
+          <div className="relative w-full md:w-72">
+            <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              value={filterTerm}
+              onChange={(e) => setFilterTerm(e.target.value)}
+              placeholder="تصفية المنتجات في هذا القسم..."
+              className="w-full bg-white border border-slate-200 focus:border-teal-500 rounded-xl pr-10 pl-9 py-2 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500/10 transition-all text-right shadow-sm"
+            />
+            {filterTerm && (
+              <button
+                onClick={() => setFilterTerm('')}
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {loading ? (
@@ -73,9 +109,20 @@ export default function ProductsPage({ categoryId, categoryName, onBack }: Produ
           <PackageX className="w-12 h-12 mb-3" />
           <p>لا توجد منتجات في هذا القسم حالياً</p>
         </div>
+      ) : filteredProducts.length === 0 ? (
+        <div className="card p-12 text-center bg-white rounded-2xl border border-slate-200">
+          <PackageX className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+          <h3 className="font-bold text-slate-800 text-base mb-1">
+            لا توجد منتجات تطابق "{filterTerm}"
+          </h3>
+          <p className="text-xs text-slate-500 mb-4">جرّب البحث بكلمة أخرى</p>
+          <button onClick={() => setFilterTerm('')} className="btn-primary text-xs">
+            مسح التصفية
+          </button>
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {products.map((product, index) => {
+          {filteredProducts.map((product, index) => {
             const qty = getQty(product.id);
             const lineTotal = product.price * qty;
             return (
