@@ -293,8 +293,18 @@ export default function HomePage({ onSelectCategory }: HomePageProps) {
         <div>
           {/* Section title */}
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-xl font-bold text-slate-900">أقسام المنتجات</h2>
-            <span className="text-sm text-slate-500">{categories.length} أقسام</span>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">أقسام المنتجات</h2>
+              <span className="text-xs sm:text-sm text-slate-500">{categories.length} أقسام متوفرة</span>
+            </div>
+
+            <button
+              onClick={() => onSelectCategory('all', 'جميع المنتجات')}
+              className="text-xs sm:text-sm font-bold text-teal-600 hover:text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5"
+            >
+              <span>تصفح كل المنتجات</span>
+              <ArrowLeft className="w-3.5 h-3.5" />
+            </button>
           </div>
 
           {/* Loading state */}

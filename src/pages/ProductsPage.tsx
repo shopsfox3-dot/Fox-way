@@ -1,9 +1,20 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { fetchProductsByCategory } from '@/lib/api';
+import { fetchProductsByCategory, fetchCategories, fetchProductCountByCategory } from '@/lib/api';
+import { getCategoryIcon } from '@/components/CategoryIcon';
 import { formatDA } from '@/lib/format';
 import { useCart } from '@/context/CartContext';
-import type { Product } from '@/types';
-import { ArrowRight, Loader2, Plus, Minus, ShoppingCart, PackageX, Search, X } from 'lucide-react';
+import type { Product, Category } from '@/types';
+import {
+  ArrowRight,
+  Loader2,
+  Plus,
+  Minus,
+  ShoppingCart,
+  PackageX,
+  Search,
+  X,
+  Layers,
+} from 'lucide-react';
 
 interface ProductsPageProps {
   categoryId: string;
@@ -11,20 +22,53 @@ interface ProductsPageProps {
   onBack: () => void;
 }
 
-export default function ProductsPage({ categoryId, categoryName, onBack }: ProductsPageProps) {
+export default function ProductsPage({
+  categoryId: initialCategoryId,
+  categoryName: initialCategoryName,
+  onBack,
+}: ProductsPageProps) {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [selectedCatId, setSelectedCatId] = useState<string>(initialCategoryId);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterTerm, setFilterTerm] = useState('');
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const { addToCart } = useCart();
 
+  // Load all categories for filter tabs
+  useEffect(() => {
+    Promise.all([fetchCategories(), fetchProductCountByCategory()])
+      .then(([cats, cnt]) => {
+        setCategories(cats);
+        setCounts(cnt);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Update selectedCatId if parent prop changes
+  useEffect(() => {
+    setSelectedCatId(initialCategoryId);
+  }, [initialCategoryId]);
+
+  // Fetch products whenever selectedCatId changes
   useEffect(() => {
     setLoading(true);
     setFilterTerm('');
-    fetchProductsByCategory(categoryId)
+    fetchProductsByCategory(selectedCatId)
       .then(setProducts)
       .finally(() => setLoading(false));
-  }, [categoryId]);
+  }, [selectedCatId]);
+
+  const activeCategoryName = useMemo(() => {
+    if (selectedCatId === 'all') return 'جميع المنتجات';
+    const found = categories.find((c) => c.id === selectedCatId);
+    return found ? found.name : initialCategoryName;
+  }, [selectedCatId, categories, initialCategoryName]);
+
+  const totalAllCount = useMemo(() => {
+    return Object.values(counts).reduce((a, b) => a + b, 0);
+  }, [counts]);
 
   const filteredProducts = useMemo(() => {
     if (!filterTerm.trim()) return products;
@@ -69,9 +113,9 @@ export default function ProductsPage({ categoryId, categoryName, onBack }: Produ
         <span>العودة للأقسام</span>
       </button>
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">{categoryName}</h1>
+          <h1 className="text-2xl font-bold text-slate-900">{activeCategoryName}</h1>
           <p className="text-slate-500 text-sm mt-1">
             {loading ? '...' : `${filteredProducts.length} من إجمالي ${products.length} منتج`}
           </p>
@@ -85,7 +129,7 @@ export default function ProductsPage({ categoryId, categoryName, onBack }: Produ
               type="text"
               value={filterTerm}
               onChange={(e) => setFilterTerm(e.target.value)}
-              placeholder="تصفية المنتجات في هذا القسم..."
+              placeholder="تصفية المنتجات هنا..."
               className="w-full bg-white border border-slate-200 focus:border-teal-500 rounded-xl pr-10 pl-9 py-2 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500/10 transition-all text-right shadow-sm"
             />
             {filterTerm && (
@@ -99,6 +143,64 @@ export default function ProductsPage({ categoryId, categoryName, onBack }: Produ
           </div>
         )}
       </div>
+
+      {/* Category Pills Filter Bar */}
+      {categories.length > 0 && (
+        <div className="mb-6 overflow-x-auto pb-2 scrollbar-none flex items-center gap-2">
+          {/* "All" button */}
+          <button
+            onClick={() => setSelectedCatId('all')}
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold shrink-0 transition-all flex items-center gap-2 ${
+              selectedCatId === 'all'
+                ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20 scale-[1.02]'
+                : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 hover:border-slate-300'
+            }`}
+          >
+            <Layers className="w-4 h-4" />
+            <span>جميع المنتجات</span>
+            <span
+              className={`text-[11px] px-1.5 py-0.5 rounded-full ${
+                selectedCatId === 'all'
+                  ? 'bg-teal-700/80 text-teal-100'
+                  : 'bg-slate-100 text-slate-500'
+              }`}
+            >
+              {totalAllCount}
+            </span>
+          </button>
+
+          {/* Individual Category buttons */}
+          {categories.map((cat) => {
+            const Icon = getCategoryIcon(cat.icon);
+            const isSelected = selectedCatId === cat.id;
+            const count = counts[cat.id] || 0;
+
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCatId(cat.id)}
+                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold shrink-0 transition-all flex items-center gap-2 ${
+                  isSelected
+                    ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20 scale-[1.02]'
+                    : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <Icon className={`w-4 h-4 ${isSelected ? 'text-teal-100' : 'text-teal-600'}`} />
+                <span>{cat.name}</span>
+                <span
+                  className={`text-[11px] px-1.5 py-0.5 rounded-full ${
+                    isSelected
+                      ? 'bg-teal-700/80 text-teal-100'
+                      : 'bg-slate-100 text-slate-500'
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-20">

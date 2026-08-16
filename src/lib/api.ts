@@ -87,7 +87,21 @@ export async function fetchCategories(): Promise<Category[]> {
   }
 }
 
+export async function fetchAllProducts(): Promise<Product[]> {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('sort_order');
+    if (error || !data) return [];
+    return data as Product[];
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchProductsByCategory(categoryId: string): Promise<Product[]> {
+  if (categoryId === 'all') return fetchAllProducts();
   try {
     const { data, error } = await supabase
       .from('products')
