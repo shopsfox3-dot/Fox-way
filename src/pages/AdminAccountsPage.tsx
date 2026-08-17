@@ -8,8 +8,12 @@ import {
   fetchLoginAttempts,
   deleteLoginAttempt,
   clearAllLoginAttempts,
+  fetchAllProducts,
+  fetchCategories,
+  toggleProductMarketAvailability,
 } from '@/lib/api';
-import type { Profile, ShopType, Wilaya, Commune, LoginAttempt } from '@/types';
+import type { Profile, ShopType, Wilaya, Commune, LoginAttempt, Product, Category } from '@/types';
+import { formatDA } from '@/lib/format';
 import {
   Users,
   Clock,
@@ -31,13 +35,16 @@ import {
   Eye,
   EyeOff,
   KeyRound,
+  Package,
+  AlertTriangle,
+  Layers,
 } from 'lucide-react';
 
 interface AdminAccountsPageProps {
   onBack: () => void;
 }
 
-type TabType = 'pending' | 'approved' | 'rejected' | 'all' | 'security_logs';
+type TabType = 'pending' | 'approved' | 'rejected' | 'all' | 'products' | 'security_logs';
 
 export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
   const { profile: currentAdmin } = useAuth();
@@ -45,6 +52,8 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
   const [shopTypes, setShopTypes] = useState<ShopType[]>([]);
   const [wilayas, setWilayas] = useState<Wilaya[]>([]);
   const [loginAttempts, setLoginAttempts] = useState<LoginAttempt[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -66,17 +75,21 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
       const { ALL_COMMUNES } = await import('@/lib/algeria_data');
       setAllCommunes(ALL_COMMUNES);
 
-      const [pData, stData, wData, laData] = await Promise.all([
+      const [pData, stData, wData, laData, prodData, catData] = await Promise.all([
         fetchAdminProfiles('all'),
         fetchShopTypes(),
         fetchWilayas(),
         fetchLoginAttempts(),
+        fetchAllProducts(),
+        fetchCategories(),
       ]);
 
       setProfiles(pData);
       setShopTypes(stData);
       setWilayas(wData);
       setLoginAttempts(laData);
+      setProducts(prodData);
+      setCategories(catData);
     } catch (err) {
       console.error('Failed to load admin data:', err);
     } finally {
@@ -84,6 +97,26 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
       setRefreshing(false);
     }
   }, []);
+
+  const handleToggleMarketAvailability = async (productId: string, currentUnavailable: boolean) => {
+    setActionLoading(productId);
+    try {
+      const newUnavailable = !currentUnavailable;
+      const success = await toggleProductMarketAvailability(productId, newUnavailable);
+      if (success) {
+        setProducts((prev) =>
+          prev.map((p) => (p.id === productId ? { ...p, market_unavailable: newUnavailable } : p))
+        );
+        const msg = newUnavailable
+          ? 'تم تعيين المنتج كـ "منقطع من السوق" وتجميد إضافته للسلة للعملاء'
+          : 'تم إعادة إتاحة المنتج للطلب الفوري بنجاح';
+        setSuccessMessage(msg);
+        setTimeout(() => setSuccessMessage(''), 4000);
+      }
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   useEffect(() => {
     loadData();
@@ -289,7 +322,7 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 mb-6">
         <div
           onClick={() => setActiveTab('pending')}
           className={`cursor-pointer p-4 rounded-2xl border transition-all duration-200 ${
@@ -305,7 +338,7 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
             </div>
           </div>
           <p className="text-2xl font-extrabold text-slate-900">{pendingCount}</p>
-          <p className="text-[11px] text-amber-600 mt-1">تنتظر المراجعة والتفعيل</p>
+          <p className="text-[11px] text-amber-600 mt-1">تنتظر المراجعة</p>
         </div>
 
         <div
@@ -323,7 +356,7 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
             </div>
           </div>
           <p className="text-2xl font-extrabold text-slate-900">{approvedCount}</p>
-          <p className="text-[11px] text-emerald-600 mt-1">تتصفح الكتالوج وتطلب</p>
+          <p className="text-[11px] text-emerald-600 mt-1">تتصفح وتطلب</p>
         </div>
 
         <div
@@ -341,7 +374,29 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
             </div>
           </div>
           <p className="text-2xl font-extrabold text-slate-900">{rejectedCount}</p>
-          <p className="text-[11px] text-red-600 mt-1">محظورة من الشراء</p>
+          <p className="text-[11px] text-red-600 mt-1">محظورة</p>
+        </div>
+
+        <div
+          onClick={() => setActiveTab('products')}
+          className={`cursor-pointer p-4 rounded-2xl border transition-all duration-200 ${
+            activeTab === 'products'
+              ? 'bg-teal-500/10 border-teal-500/40 shadow-md ring-2 ring-teal-500/20'
+              : 'bg-white border-slate-200 hover:border-teal-300'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-teal-700">توفر المنتجات</span>
+            <div className="w-8 h-8 rounded-xl bg-teal-100 flex items-center justify-center text-teal-600">
+              <Package className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-2xl font-extrabold text-slate-900">{products.length}</p>
+          <p className="text-[11px] text-teal-600 mt-1">
+            {products.filter((p) => p.market_unavailable).length > 0
+              ? `${products.filter((p) => p.market_unavailable).length} منقطع من السوق`
+              : 'متاح للطلب JIT'}
+          </p>
         </div>
 
         <div
@@ -359,21 +414,21 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
             </div>
           </div>
           <p className="text-2xl font-extrabold text-slate-900">{loginAttempts.length}</p>
-          <p className="text-[11px] text-indigo-600 mt-1">محاولات دخول مسجلة</p>
+          <p className="text-[11px] text-indigo-600 mt-1">محاولات مسجلة</p>
         </div>
       </div>
 
       {/* Tabs & Search */}
       <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-6 shadow-sm">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
           {/* Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-none">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setActiveTab('pending')}
-              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
                 activeTab === 'pending'
                   ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  : 'text-slate-600 hover:bg-slate-100 border border-slate-200/60'
               }`}
             >
               <Clock className="w-4 h-4" />
@@ -385,10 +440,10 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
 
             <button
               onClick={() => setActiveTab('approved')}
-              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
                 activeTab === 'approved'
                   ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  : 'text-slate-600 hover:bg-slate-100 border border-slate-200/60'
               }`}
             >
               <CheckCircle2 className="w-4 h-4" />
@@ -400,10 +455,10 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
 
             <button
               onClick={() => setActiveTab('rejected')}
-              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
                 activeTab === 'rejected'
                   ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  : 'text-slate-600 hover:bg-slate-100 border border-slate-200/60'
               }`}
             >
               <XCircle className="w-4 h-4" />
@@ -415,10 +470,10 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
 
             <button
               onClick={() => setActiveTab('all')}
-              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
                 activeTab === 'all'
-                  ? 'bg-slate-900 text-white shadow-md'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  ? 'bg-slate-900 text-white shadow-md shadow-slate-900/30'
+                  : 'text-slate-600 hover:bg-slate-100 border border-slate-200/60'
               }`}
             >
               <Users className="w-4 h-4" />
@@ -429,31 +484,61 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
             </button>
 
             <button
+              onClick={() => setActiveTab('products')}
+              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
+                activeTab === 'products'
+                  ? 'bg-teal-600 text-white shadow-md shadow-teal-600/30'
+                  : 'text-slate-600 hover:bg-slate-100 border border-slate-200/60'
+              }`}
+            >
+              <Package className="w-4 h-4" />
+              <span>توفر المنتجات بالسوق</span>
+              <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${
+                activeTab === 'products'
+                  ? 'bg-teal-700 text-white'
+                  : products.filter((p) => p.market_unavailable).length > 0
+                  ? 'bg-red-100 text-red-700 font-bold'
+                  : 'bg-slate-200 text-slate-700'
+              }`}>
+                {products.filter((p) => p.market_unavailable).length > 0
+                  ? `${products.filter((p) => p.market_unavailable).length} منقطع`
+                  : products.length}
+              </span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('security_logs')}
-              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
                 activeTab === 'security_logs'
                   ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  : 'text-slate-600 hover:bg-slate-100 border border-slate-200/60'
               }`}
             >
               <ShieldAlert className="w-4 h-4" />
               <span>سجل الأمان</span>
+              <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${activeTab === 'security_logs' ? 'bg-indigo-700 text-white' : 'bg-slate-200 text-slate-700'}`}>
+                {loginAttempts.length}
+              </span>
             </button>
           </div>
 
           {/* Search bar */}
-          {activeTab !== 'security_logs' && (
-            <div className="relative w-full md:w-64">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="بحث بالاسم، الهاتف، الولاية..."
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-9 pl-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-teal-500 focus:bg-white transition-all text-right"
-              />
-            </div>
-          )}
+          <div className="relative w-full lg:w-72 shrink-0">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder={
+                activeTab === 'products'
+                  ? 'بحث في المنتجات...'
+                  : activeTab === 'security_logs'
+                  ? 'بحث في سجل الدخول...'
+                  : 'بحث بالاسم، الهاتف، الولاية...'
+              }
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl pr-9 pl-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-teal-500 focus:bg-white transition-all text-right"
+            />
+          </div>
         </div>
       </div>
 
@@ -571,6 +656,112 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
                   </div>
                 );
               })}
+            </div>
+          )}
+        </div>
+      ) : activeTab === 'products' ? (
+        /* Products Market Availability Tab */
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="font-bold text-slate-900 text-base">مفتاح انقطاع وتوفر السلع في السوق (JIT & Market Outage)</h2>
+              <p className="text-xs text-slate-500">
+                يمكنك بنقرة واحدة إيقاف أي سلعة انقطعت من السوق لمنع طلبها، أو إتاحتها للتوريد الفوري عند الطلب
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs bg-slate-100 text-slate-700 px-3 py-1.5 rounded-xl font-bold">
+                إجمالي المنتجات: {products.length}
+              </span>
+            </div>
+          </div>
+
+          {products.length === 0 ? (
+            <div className="text-center py-16 text-slate-400">
+              <Package className="w-12 h-12 mx-auto mb-2 opacity-50 text-slate-400" />
+              <p className="font-bold text-slate-700">لا توجد منتجات مسجلة في قاعدة البيانات حالياً</p>
+              <p className="text-xs text-slate-400 mt-1">عند إضافة منتجات ستظهر هنا للتحكم في توفرها بالسوق بنقرة زر</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {products
+                .filter((p) => {
+                  if (!searchTerm.trim()) return true;
+                  const t = searchTerm.toLowerCase();
+                  return p.name.toLowerCase().includes(t) || (p.description || '').toLowerCase().includes(t);
+                })
+                .map((product) => {
+                  const isActionBusy = actionLoading === product.id;
+                  const cat = categories.find((c) => c.id === product.category_id);
+
+                  return (
+                    <div
+                      key={product.id}
+                      className="p-4 hover:bg-slate-50/80 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-right"
+                    >
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-bold text-slate-900 text-sm sm:text-base">{product.name}</h3>
+                          {cat && (
+                            <span className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-medium">
+                              {cat.name}
+                            </span>
+                          )}
+                          <span className="text-xs font-bold text-teal-600 bg-teal-50 border border-teal-200/60 px-2 py-0.5 rounded-md">
+                            {formatDA(product.price)} / {product.unit}
+                          </span>
+                        </div>
+
+                        {product.description && (
+                          <p className="text-xs text-slate-500 line-clamp-1">{product.description}</p>
+                        )}
+
+                        <div className="flex items-center gap-3 text-xs">
+                          {product.market_unavailable ? (
+                            <span className="text-xs text-red-600 font-bold flex items-center gap-1">
+                              <AlertTriangle className="w-3.5 h-3.5" />
+                              <span>منقطع تماماً من السوق (الطلب معطل للعملاء)</span>
+                            </span>
+                          ) : product.stock > 0 ? (
+                            <span className="text-xs text-emerald-600 font-medium">
+                              متوفر بالمستودع: {product.stock} {product.unit}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-teal-600 font-medium">
+                              رصيد المستودع (0) • توريد عند الطلب (JIT متاح)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Outage Toggle Button */}
+                      <div className="shrink-0 flex items-center gap-2">
+                        <button
+                          disabled={isActionBusy}
+                          onClick={() => handleToggleMarketAvailability(product.id, product.market_unavailable)}
+                          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50 ${
+                            product.market_unavailable
+                              ? 'bg-red-500 text-white hover:bg-red-600 ring-2 ring-red-500/20'
+                              : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-300'
+                          }`}
+                        >
+                          {isActionBusy ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : product.market_unavailable ? (
+                            <AlertTriangle className="w-3.5 h-3.5" />
+                          ) : (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          )}
+                          <span>
+                            {product.market_unavailable
+                              ? '⛔ منقطع (اضغط للإتاحة)'
+                              : '✅ متاح بالسوق (اضغط للتعطيل)'}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
           )}
         </div>

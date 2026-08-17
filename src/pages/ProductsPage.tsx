@@ -278,7 +278,7 @@ export default function ProductsPage({
 
                   <button
                     onClick={() => handleAdd(product)}
-                    disabled={product.stock === 0}
+                    disabled={product.market_unavailable}
                     className="flex-1 btn-primary flex items-center justify-center gap-2 text-sm py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <ShoppingCart className="w-4 h-4" />
@@ -286,10 +286,16 @@ export default function ProductsPage({
                   </button>
                 </div>
 
-                {product.stock > 0 ? (
-                  <p className="text-xs text-green-600 mt-2">متوفر في المخزون: {product.stock}</p>
+                {product.market_unavailable ? (
+                  <p className="text-xs text-red-500 font-medium mt-2">⛔ غير متوفر حالياً (منقطع من السوق)</p>
+                ) : product.stock > 0 ? (
+                  <p className="text-xs text-emerald-600 font-medium mt-2">
+                    متوفر بالمستودع: {product.stock} {product.unit}
+                  </p>
                 ) : (
-                  <p className="text-xs text-red-500 mt-2">غير متوفر حالياً</p>
+                  <p className="text-xs text-teal-600 font-medium mt-2">
+                    ⚡ توريد عند الطلب (JIT متاح)
+                  </p>
                 )}
               </div>
             );

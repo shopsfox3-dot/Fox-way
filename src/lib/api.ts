@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import type { Wilaya, Commune, Category, Product, ShopType } from '@/types';
 
 // تحميل البيانات المحلية بشكل lazy لتقليل حجم الـ bundle الرئيسي
@@ -131,6 +131,18 @@ export async function searchAllProducts(query: string): Promise<Product[]> {
   }
 }
 
+export async function toggleProductMarketAvailability(productId: string, marketUnavailable: boolean): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('products')
+      .update({ market_unavailable: marketUnavailable })
+      .eq('id', productId);
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
 export async function fetchProductCountByCategory(): Promise<Record<string, number>> {
   try {
     const { data, error } = await supabase
@@ -223,7 +235,7 @@ export async function fetchLoginAttempts(): Promise<import('@/types').LoginAttem
 
 export async function deleteLoginAttempt(attemptId: string): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('login_attempts')
       .delete()
       .eq('id', attemptId);
@@ -235,7 +247,7 @@ export async function deleteLoginAttempt(attemptId: string): Promise<boolean> {
 
 export async function clearAllLoginAttempts(): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('login_attempts')
       .delete()
       .neq('id', '00000000-0000-0000-0000-000000000000');

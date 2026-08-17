@@ -29,10 +29,14 @@ export default function CartPage({ onBack }: CartPageProps) {
   const handlePlaceOrder = async () => {
     if (!session?.user || items.length === 0) return;
 
-    // Check stock before placing order
-    const outOfStock = items.filter((item) => item.product.stock === 0);
-    if (outOfStock.length > 0) {
-      setError(`المنتجات التالية غير متوفرة في المخزون: ${outOfStock.map((i) => i.product.name).join('، ')}`);
+    // Only block if a product is marked as completely unavailable in the market
+    const unavailableItems = items.filter((item) => item.product.market_unavailable);
+    if (unavailableItems.length > 0) {
+      setError(
+        `المنتجات التالية منقطعة تماماً من السوق ولا يمكن إتمام الطلب: ${unavailableItems
+          .map((i) => i.product.name)
+          .join('، ')}`
+      );
       return;
     }
 
@@ -145,6 +149,19 @@ export default function CartPage({ onBack }: CartPageProps) {
                   <p className="text-sm text-slate-500">
                     {formatDA(item.product.price)} / {item.product.unit}
                   </p>
+                  {item.product.market_unavailable ? (
+                    <span className="text-[11px] text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md font-semibold inline-block mt-1">
+                      ⛔ منقطع من السوق حالياً
+                    </span>
+                  ) : item.product.stock <= 0 ? (
+                    <span className="text-[11px] text-teal-700 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-md font-medium inline-block mt-1">
+                      ⚡ توريد عند الطلب (JIT)
+                    </span>
+                  ) : (
+                    <span className="text-[11px] text-emerald-600 font-medium block mt-1">
+                      متوفر بالمستودع: {item.product.stock} {item.product.unit}
+                    </span>
+                  )}
                 </div>
 
                 {/* Quantity controls */}

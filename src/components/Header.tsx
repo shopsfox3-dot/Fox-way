@@ -18,14 +18,14 @@ export default function Header({ onNavigate, currentPage }: HeaderProps) {
 
   useEffect(() => {
     if (profile?.wilaya_code) {
-      supabase
-        .from('wilayas')
-        .select('name')
-        .eq('code', profile.wilaya_code)
-        .maybeSingle()
-        .then(({ data }) => {
-          setWilayaName(data?.name || profile.wilaya_code);
-        });
+      import('@/lib/algeria_data').then(({ ALL_WILAYAS }) => {
+        const padded = profile.wilaya_code.padStart(2, '0');
+        const local = ALL_WILAYAS.find(
+          (w) => w.code === profile.wilaya_code || w.code === padded || String(w.id) === profile.wilaya_code
+        );
+        if (local) setWilayaName(local.name);
+        else setWilayaName(profile.wilaya_code);
+      });
     } else {
       setWilayaName(null);
     }

@@ -34,6 +34,17 @@ CREATE POLICY "admin_read_login_attempts" ON public.login_attempts
     )
   );
 
+DROP POLICY IF EXISTS "admin_delete_login_attempts" ON public.login_attempts;
+CREATE POLICY "admin_delete_login_attempts" ON public.login_attempts
+  FOR DELETE TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.role = 'admin'
+    )
+  );
+
 -- 2. سياسات صلاحيات الأدمن على جدول profiles
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'pending';
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS role text NOT NULL DEFAULT 'client';
