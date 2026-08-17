@@ -131,8 +131,15 @@ CREATE TABLE IF NOT EXISTS public.products (
   stock int NOT NULL DEFAULT 0,
   image_url text,
   sort_order int DEFAULT 0,
-  market_unavailable boolean DEFAULT false
+  market_unavailable boolean DEFAULT false,
+  units_per_pack int DEFAULT NULL,    -- عدد الحبات في الكرتونة (null = لا يباع بالكرتونة)
+  pack_label text DEFAULT NULL,       -- اسم وحدة التعبئة (كرتونة، علبة، لوح، ...)
+  pack_price numeric(10,2) DEFAULT NULL  -- سعر الحبة عند الشراء بالكرتونة
 );
+-- إضافة الأعمدة لمن نفذ الـ script قبل هذا التحديث
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS units_per_pack int DEFAULT NULL;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS pack_label text DEFAULT NULL;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS pack_price numeric(10,2) DEFAULT NULL;
 
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "public_read_products" ON public.products;
@@ -224,4 +231,17 @@ DROP POLICY IF EXISTS "user_delete_own_cart" ON public.cart_drafts;
 CREATE POLICY "user_delete_own_cart" ON public.cart_drafts
   FOR DELETE TO authenticated
   USING (auth.uid() = user_id);
+
+-- صلاحية الأدمن لمشاهدة سلات كل العملاء غير المكتملة للتواصل معهم
+DROP POLICY IF EXISTS "admin_read_all_cart_drafts" ON public.cart_drafts;
+CREATE POLICY "admin_read_all_cart_drafts" ON public.cart_drafts
+  FOR SELECT TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.role = 'admin'
+    )
+  );
+
 

@@ -143,6 +143,28 @@ export async function toggleProductMarketAvailability(productId: string, marketU
   }
 }
 
+// تحديث معلومات الكرتونة/الحبة لمنتج معين (من لوحة الأدمن)
+export async function updateProductPackInfo(
+  productId: string,
+  unitsPerPack: number | null,
+  packLabel: string | null,
+  packPrice: number | null
+): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('products')
+      .update({
+        units_per_pack: unitsPerPack,
+        pack_label: packLabel || null,
+        pack_price: packPrice || null,
+      })
+      .eq('id', productId);
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
 export async function fetchProductCountByCategory(): Promise<Record<string, number>> {
   try {
     const { data, error } = await supabase
@@ -287,3 +309,36 @@ export async function updateProfileStatus(profileId: string, status: 'approved' 
     return false;
   }
 }
+
+// جلب جميع السلات المتروكة / قيد الإعداد مع بيانات أصحابها للأدمن
+export async function fetchAdminCartDrafts(): Promise<import('@/types').AbandonedCart[]> {
+  try {
+    const { data: drafts, error: draftsError } = await supabase
+      .from('cart_drafts')
+      .select('*')
+      .order('updated_at', { ascending: false });
+
+    if (draftsError || !drafts) return [];
+
+    // فلترة السلات الفارغة
+    const nonEmptyDrafts = drafts.filter((d: { items: unknown[] }) => Array.isArray(d.items) && d.items.length > 0);
+    if (nonEmptyDrafts.length === 0) return [];
+
+    // جلب بروفايلات أصحاب هذه السلات
+    const userIds = nonEmptyDrafts.map((d: { user_id: string }) => d.user_id);
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('*')
+      .in('id', userIds);
+
+    const profileMap = new Map((profiles || []).map((p: import('@/types').Profile) => [p.id, p]));
+
+    return nonEmptyDrafts.map((d: { id: string; user_id: string; items: import('@/types').CartItem[]; updated_at: string }) => ({
+      ...d,
+      profile: profileMap.get(d.user_id),
+    }));
+  } catch {
+    return [];
+  }
+}
+

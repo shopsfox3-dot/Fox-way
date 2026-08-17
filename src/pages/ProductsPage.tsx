@@ -14,6 +14,8 @@ import {
   Search,
   X,
   Layers,
+  Package,
+  Box,
 } from 'lucide-react';
 
 interface ProductsPageProps {
@@ -34,6 +36,8 @@ export default function ProductsPage({
   const [loading, setLoading] = useState(true);
   const [filterTerm, setFilterTerm] = useState('');
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  // وضع الشراء لكل منتج: 'unit' = حبة، 'pack' = كرتونة
+  const [purchaseModes, setPurchaseModes] = useState<Record<string, 'unit' | 'pack'>>({});
   const { addToCart } = useCart();
 
   // Load all categories for filter tabs
@@ -81,6 +85,7 @@ export default function ProductsPage({
   }, [products, filterTerm]);
 
   const getQty = useCallback((productId: string) => quantities[productId] || 1, [quantities]);
+  const getMode = useCallback((productId: string): 'unit' | 'pack' => purchaseModes[productId] || 'unit', [purchaseModes]);
 
   const increment = useCallback((productId: string) => {
     setQuantities((prev) => ({ ...prev, [productId]: (prev[productId] || 1) + 1 }));
@@ -94,13 +99,45 @@ export default function ProductsPage({
     });
   }, []);
 
+  const toggleMode = useCallback((productId: string) => {
+    setPurchaseModes((prev) => ({
+      ...prev,
+      [productId]: prev[productId] === 'pack' ? 'unit' : 'pack',
+    }));
+    // إعادة الكمية لـ 1 عند التبديل
+    setQuantities((prev) => ({ ...prev, [productId]: 1 }));
+  }, []);
+
   const handleAdd = useCallback(
     (product: Product) => {
-      addToCart(product, quantities[product.id] || 1);
+      const mode = getMode(product.id);
+      addToCart(product, quantities[product.id] || 1, mode);
       setQuantities((prev) => ({ ...prev, [product.id]: 1 }));
     },
-    [addToCart, quantities]
+    [addToCart, quantities, getMode]
   );
+
+  // سعر الحبة الظاهر بناءً على وضع الشراء
+  const getDisplayUnitPrice = useCallback((product: Product, mode: 'unit' | 'pack') => {
+    if (mode === 'pack' && product.units_per_pack) {
+      return product.pack_price ?? product.price; // سعر الحبة عند الكرتونة
+    }
+    return product.price;
+  }, []);
+
+  // سعر الكرتونة الكامل
+  const getPackTotalPrice = useCallback((product: Product) => {
+    if (!product.units_per_pack) return 0;
+    const pricePerUnit = product.pack_price ?? product.price;
+    return pricePerUnit * product.units_per_pack;
+  }, []);
+
+  // مبلغ التوفير عند شراء كرتونة كاملة (مقارنةً بسعر الحبة العادي)
+  const getSavingsPerPack = useCallback((product: Product) => {
+    if (!product.units_per_pack || !product.pack_price) return 0;
+    return (product.price - product.pack_price) * product.units_per_pack;
+  }, []);
+
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
@@ -226,7 +263,17 @@ export default function ProductsPage({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredProducts.map((product, index) => {
             const qty = getQty(product.id);
-            const lineTotal = product.price * qty;
+            const mode = getMode(product.id);
+            const hasPack = !!(product.units_per_pack && product.units_per_pack > 1);
+            const packLabel = product.pack_label || 'كرتونة';
+            const unitPrice = getDisplayUnitPrice(product, mode);
+            const packTotal = hasPack ? getPackTotalPrice(product) : 0;
+            const savings = hasPack ? getSavingsPerPack(product) : 0;
+            // الإجمالي في بطاقة المنتج
+            const lineTotal = mode === 'pack'
+              ? packTotal * qty
+              : unitPrice * qty;
+
             return (
               <div
                 key={product.id}
@@ -245,16 +292,67 @@ export default function ProductsPage({
                   <p className="text-sm text-slate-500 mb-3 line-clamp-2">{product.description}</p>
                 )}
 
+                {/* زر التبديل حبة/كرتونة */}
+                {hasPack && (
+                  <div className="flex items-center gap-1.5 mb-3 bg-slate-50 rounded-xl p-1 border border-slate-200">
+                    <button
+                      onClick={() => mode === 'pack' && toggleMode(product.id)}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold transition-all ${
+                        mode === 'unit'
+                          ? 'bg-white text-teal-700 shadow-sm border border-teal-200'
+                          : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      <Package className="w-3.5 h-3.5" />
+                      <span>بالحبة</span>
+                      <span className="text-[10px] font-normal opacity-70">{formatDA(product.price)}</span>
+                    </button>
+                    <button
+                      onClick={() => mode === 'unit' && toggleMode(product.id)}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold transition-all ${
+                        mode === 'pack'
+                          ? 'bg-white text-teal-700 shadow-sm border border-teal-200'
+                          : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      <Box className="w-3.5 h-3.5" />
+                      <span>بالـ{packLabel}</span>
+                      {product.pack_price && product.pack_price < product.price && (
+                        <span className="text-[10px] font-normal text-emerald-600">{formatDA(product.pack_price)}/ح</span>
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {/* توضيح الكرتونة + شارة التوفير */}
+                {hasPack && mode === 'pack' && (
+                  <div className="mb-3 space-y-1">
+                    <p className="text-[11px] text-teal-700 bg-teal-50 border border-teal-200/60 px-2.5 py-1 rounded-lg font-medium">
+                      📦 {packLabel} واحدة = {product.units_per_pack} {product.unit} × {formatDA(unitPrice)} = <strong>{formatDA(packTotal)}</strong>
+                    </p>
+                    {savings > 0 && (
+                      <p className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2.5 py-1 rounded-lg font-bold">
+                        🎉 توفّر {formatDA(savings)} لكل {packLabel} مقارنةً بالحبة!
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between mb-4 mt-auto">
                   <div>
-                    <p className="text-lg font-bold text-teal-600">{formatDA(product.price)}</p>
-                    <p className="text-xs text-slate-400">للوحدة: {product.unit}</p>
+                    <p className="text-lg font-bold text-teal-600">
+                      {mode === 'pack' ? formatDA(packTotal) : formatDA(unitPrice)}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      {mode === 'pack' ? `لكل ${packLabel}` : `للـ${product.unit}`}
+                    </p>
                   </div>
                   <div className="text-left">
                     <p className="text-xs text-slate-400">الإجمالي</p>
                     <p className="text-sm font-semibold text-slate-700">{formatDA(lineTotal)}</p>
                   </div>
                 </div>
+
 
                 {/* Quantity + add */}
                 <div className="flex items-center gap-3">
@@ -286,6 +384,7 @@ export default function ProductsPage({
                   </button>
                 </div>
 
+                {/* حالة التوفر */}
                 {product.market_unavailable ? (
                   <p className="text-xs text-red-500 font-medium mt-2">⛔ غير متوفر حالياً (منقطع من السوق)</p>
                 ) : product.stock > 0 ? (

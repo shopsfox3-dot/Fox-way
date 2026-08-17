@@ -23,12 +23,16 @@ export interface Product {
   category_id: string;
   name: string;
   description: string | null;
-  price: number;
+  price: number;           // سعر الحبة المفردة
   unit: string;
   stock: number;
   image_url: string | null;
   sort_order: number;
   market_unavailable: boolean;
+  // ميزة البيع بالحبة والكرتونة
+  units_per_pack: number | null;  // عدد الحبات في الكرتونة
+  pack_label: string | null;      // اسم الوحدة الكبيرة
+  pack_price: number | null;      // سعر الحبة عند الشراء بالكرتونة (null = نفس سعر الحبة)
 }
 
 export interface ShopType {
@@ -55,6 +59,15 @@ export interface Profile {
 export interface CartItem {
   product: Product;
   quantity: number;
+  purchase_mode: 'unit' | 'pack'; // حبة بحبة أو بالكرتونة
+}
+
+export interface AbandonedCart {
+  id: string;
+  user_id: string;
+  items: CartItem[];
+  updated_at: string;
+  profile?: Profile;
 }
 
 export interface Order {

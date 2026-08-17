@@ -11,8 +11,10 @@ import {
   fetchAllProducts,
   fetchCategories,
   toggleProductMarketAvailability,
+  updateProductPackInfo,
+  fetchAdminCartDrafts,
 } from '@/lib/api';
-import type { Profile, ShopType, Wilaya, Commune, LoginAttempt, Product, Category } from '@/types';
+import type { Profile, ShopType, Wilaya, Commune, LoginAttempt, Product, Category, AbandonedCart } from '@/types';
 import { formatDA } from '@/lib/format';
 import {
   Users,
@@ -38,13 +40,14 @@ import {
   Package,
   AlertTriangle,
   Layers,
+  ShoppingBag,
 } from 'lucide-react';
 
 interface AdminAccountsPageProps {
   onBack: () => void;
 }
 
-type TabType = 'pending' | 'approved' | 'rejected' | 'all' | 'products' | 'security_logs';
+type TabType = 'pending' | 'approved' | 'rejected' | 'all' | 'products' | 'abandoned_carts' | 'security_logs';
 
 export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
   const { profile: currentAdmin } = useAuth();
@@ -54,6 +57,7 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
   const [loginAttempts, setLoginAttempts] = useState<LoginAttempt[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [abandonedCarts, setAbandonedCarts] = useState<AbandonedCart[]>([]);
   
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -62,6 +66,9 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
+  // تحرير معلومات الكرتونة لكل منتج
+  const [editingPackId, setEditingPackId] = useState<string | null>(null);
+  const [packForm, setPackForm] = useState<{ units: string; label: string; packPrice: string }>({ units: '', label: '', packPrice: '' });
 
   const togglePasswordReveal = (id: string) => {
     setRevealedPasswords((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -75,13 +82,14 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
       const { ALL_COMMUNES } = await import('@/lib/algeria_data');
       setAllCommunes(ALL_COMMUNES);
 
-      const [pData, stData, wData, laData, prodData, catData] = await Promise.all([
+      const [pData, stData, wData, laData, prodData, catData, draftData] = await Promise.all([
         fetchAdminProfiles('all'),
         fetchShopTypes(),
         fetchWilayas(),
         fetchLoginAttempts(),
         fetchAllProducts(),
         fetchCategories(),
+        fetchAdminCartDrafts(),
       ]);
 
       setProfiles(pData);
@@ -90,6 +98,7 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
       setLoginAttempts(laData);
       setProducts(prodData);
       setCategories(catData);
+      setAbandonedCarts(draftData);
     } catch (err) {
       console.error('Failed to load admin data:', err);
     } finally {
@@ -117,6 +126,49 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
       setActionLoading(null);
     }
   };
+
+  // فتح نموذج تحرير الكرتونة لمنتج معين
+  const handleStartEditPack = (product: Product) => {
+    setEditingPackId(product.id);
+    setPackForm({
+      units: product.units_per_pack ? String(product.units_per_pack) : '',
+      label: product.pack_label || 'كرتونة',
+      packPrice: product.pack_price ? String(product.pack_price) : '',
+    });
+  };
+
+  // حفظ معلومات الكرتونة
+  const handleSavePackInfo = async (productId: string) => {
+    const units = parseInt(packForm.units);
+    const unitsPerPack = !isNaN(units) && units > 1 ? units : null;
+    const packLabel = packForm.label.trim() || 'كرتونة';
+    const packPriceVal = parseFloat(packForm.packPrice);
+    const packPrice = !isNaN(packPriceVal) && packPriceVal > 0 ? packPriceVal : null;
+
+    setActionLoading(`pack-${productId}`);
+    try {
+      const success = await updateProductPackInfo(productId, unitsPerPack, unitsPerPack ? packLabel : null, unitsPerPack ? packPrice : null);
+      if (success) {
+        setProducts((prev) =>
+          prev.map((p) =>
+            p.id === productId
+              ? { ...p, units_per_pack: unitsPerPack, pack_label: unitsPerPack ? packLabel : null, pack_price: unitsPerPack ? packPrice : null }
+              : p
+          )
+        );
+        setEditingPackId(null);
+        setSuccessMessage(
+          unitsPerPack
+            ? `✅ تم ضبط "${packLabel}" = ${unitsPerPack} وحدة${packPrice ? ` بسعر حبة ${packPrice} دج` : ''}`
+            : '✅ تم إلغاء خيار الكرتونة لهذا المنتج'
+        );
+        setTimeout(() => setSuccessMessage(''), 4000);
+      }
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
 
   useEffect(() => {
     loadData();
@@ -400,6 +452,24 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
         </div>
 
         <div
+          onClick={() => setActiveTab('abandoned_carts')}
+          className={`cursor-pointer p-4 rounded-2xl border transition-all duration-200 ${
+            activeTab === 'abandoned_carts'
+              ? 'bg-amber-500/10 border-amber-500/40 shadow-md ring-2 ring-amber-500/20'
+              : 'bg-white border-slate-200 hover:border-amber-300'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-amber-700">سلات لم تكتمل</span>
+            <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
+              <ShoppingBag className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-2xl font-extrabold text-slate-900">{abandonedCarts.length}</p>
+          <p className="text-[11px] text-amber-600 mt-1">زبائن انشغلوا</p>
+        </div>
+
+        <div
           onClick={() => setActiveTab('security_logs')}
           className={`cursor-pointer p-4 rounded-2xl border transition-all duration-200 ${
             activeTab === 'security_logs'
@@ -503,6 +573,27 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
                 {products.filter((p) => p.market_unavailable).length > 0
                   ? `${products.filter((p) => p.market_unavailable).length} منقطع`
                   : products.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('abandoned_carts')}
+              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
+                activeTab === 'abandoned_carts'
+                  ? 'bg-amber-600 text-white shadow-md shadow-amber-600/30'
+                  : 'text-slate-600 hover:bg-slate-100 border border-slate-200/60'
+              }`}
+            >
+              <ShoppingBag className="w-4 h-4" />
+              <span>سلات لم تُرسل (متروكة)</span>
+              <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${
+                activeTab === 'abandoned_carts'
+                  ? 'bg-amber-700 text-white'
+                  : abandonedCarts.length > 0
+                  ? 'bg-amber-100 text-amber-800 font-bold'
+                  : 'bg-slate-200 text-slate-700'
+              }`}>
+                {abandonedCarts.length}
               </span>
             </button>
 
@@ -732,6 +823,102 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
                             </span>
                           )}
                         </div>
+
+                        {/* معلومات الكرتونة */}
+                        {editingPackId === product.id ? (
+                          <div className="mt-2 p-3 bg-teal-50 border border-teal-200 rounded-xl flex flex-col gap-2">
+                            <p className="text-xs font-bold text-teal-700">⚙️ ضبط معلومات الكرتونة</p>
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1">
+                                <label className="text-[10px] text-slate-500 block mb-0.5">عدد الحبات في الكرتونة</label>
+                                <input
+                                  type="number"
+                                  min="2"
+                                  value={packForm.units}
+                                  onChange={e => setPackForm(f => ({ ...f, units: e.target.value }))}
+                                  placeholder="مثال: 12"
+                                  className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-teal-500"
+                                />
+                              </div>
+                              <div className="flex-1">
+                                <label className="text-[10px] text-slate-500 block mb-0.5">اسم الوحدة</label>
+                                <input
+                                  type="text"
+                                  value={packForm.label}
+                                  onChange={e => setPackForm(f => ({ ...f, label: e.target.value }))}
+                                  placeholder="كرتونة / علبة / لوح"
+                                  className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-teal-500"
+                                />
+                              </div>
+                            </div>
+                            {/* سعر الحبة عند الكرتونة */}
+                            <div>
+                              <label className="text-[10px] text-slate-500 block mb-0.5">
+                                سعر الحبة عند شراء الكرتونة — اتركه فارغاً إذا نفس سعر الحبة العادية
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={packForm.packPrice}
+                                onChange={e => setPackForm(f => ({ ...f, packPrice: e.target.value }))}
+                                placeholder={`مثال: لو سعر الحبة العادي ${product.price} دج، اكتب 95 هنا للتخفيض`}
+                                className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-teal-500"
+                              />
+                              {packForm.packPrice && packForm.units && (
+                                <p className="text-[10px] text-teal-600 mt-0.5">
+                                  → الكرتونة = {(parseFloat(packForm.packPrice || '0') * parseInt(packForm.units || '0')).toFixed(0)} دج بدل {(product.price * parseInt(packForm.units || '0')).toFixed(0)} دج
+                                  (توفير {((product.price - parseFloat(packForm.packPrice || '0')) * parseInt(packForm.units || '0')).toFixed(0)} دج)
+                                </p>
+                              )}
+                            </div>
+                            {/* أزرار الحفظ */}
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleSavePackInfo(product.id)}
+                                disabled={actionLoading === `pack-${product.id}`}
+                                className="flex-1 bg-teal-600 text-white text-xs font-bold py-1.5 rounded-lg hover:bg-teal-700 disabled:opacity-50 flex items-center justify-center gap-1"
+                              >
+                                {actionLoading === `pack-${product.id}` ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                                حفظ
+                              </button>
+                              <button
+                                onClick={() => setPackForm(f => ({ ...f, units: '', packPrice: '' }))}
+                                className="text-xs text-red-600 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50"
+                                title="يمسح الكرتونة عند الحفظ"
+                              >
+                                إلغاء الكرتونة
+                              </button>
+                              <button
+                                onClick={() => setEditingPackId(null)}
+                                className="text-xs text-slate-500 border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50"
+                              >
+                                إغلاق
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mt-2 flex items-center gap-2 flex-wrap">
+                            {product.units_per_pack ? (
+                              <span className="text-[11px] bg-teal-50 text-teal-700 border border-teal-200 px-2 py-0.5 rounded-lg font-medium">
+                                📦 {product.pack_label || 'كرتونة'} = {product.units_per_pack} {product.unit}
+                                {product.pack_price && product.pack_price < product.price ? (
+                                  <span className="mr-1 text-emerald-600">
+                                    • {product.pack_price} دج/ح → يوفّر {((product.price - product.pack_price) * product.units_per_pack).toFixed(0)} دج/كرتونة
+                                  </span>
+                                ) : null}
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-slate-400">لا يباع بالكرتونة (حبة فقط)</span>
+                            )}
+                            <button
+                              onClick={() => handleStartEditPack(product)}
+                              className="text-[11px] text-teal-600 hover:text-teal-800 underline"
+                            >
+                              تعديل
+                            </button>
+                          </div>
+                        )}
                       </div>
 
                       {/* Outage Toggle Button */}
@@ -758,6 +945,162 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
                               : '✅ متاح بالسوق (اضغط للتعطيل)'}
                           </span>
                         </button>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+        </div>
+      ) : activeTab === 'abandoned_carts' ? (
+        /* Abandoned Carts / Pending Drafts tab */
+        <div className="space-y-4">
+          <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent p-4 rounded-2xl border border-amber-500/30 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
+                <ShoppingBag className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="font-bold text-slate-900 text-base sm:text-lg">سلات قيد الإعداد (زبائن بدأوا الطلب ولم يرسلوه)</h2>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  هؤلاء تجار قاموا باختيار سلع وانشغلوا في محلاتهم — يمكنك الاتصال بهم أو مراسلتهم على واتساب لتذكيرهم وتأكيد طلبياتهم فوراً!
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => loadData(true)}
+              className="btn-ghost p-2 rounded-xl text-slate-600 hover:text-teal-600 shrink-0"
+              title="تحديث القائمة"
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
+
+          {abandonedCarts.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-slate-200 p-16 text-center shadow-sm">
+              <div className="w-14 h-14 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-3 text-amber-500">
+                <CheckCircle2 className="w-7 h-7" />
+              </div>
+              <h3 className="font-bold text-slate-800 text-base mb-1">لا توجد سلات متروكة حالياً</h3>
+              <p className="text-xs text-slate-500">كل الزبائن إما أرسلوا طلباتهم أو سلاتهم فارغة</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {abandonedCarts
+                .filter((cart) => {
+                  if (!searchTerm.trim()) return true;
+                  const term = searchTerm.toLowerCase();
+                  const p = cart.profile;
+                  const name = p ? `${p.first_name || ''} ${p.last_name || ''}`.toLowerCase() : '';
+                  const phone = p?.phone || '';
+                  return name.includes(term) || phone.includes(term);
+                })
+                .map((cart, idx) => {
+                  const p = cart.profile;
+                  const clientName = p ? `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'تاجر بدون اسم' : 'حساب غير معروف';
+                  const phone = p?.phone || '';
+                  
+                  // حساب إجمالي السلة
+                  const cartTotal = cart.items.reduce((sum, it) => {
+                    const isPack = it.purchase_mode === 'pack' && !!it.product.units_per_pack;
+                    const pricePerUnit = isPack ? (it.product.pack_price ?? it.product.price) : it.product.price;
+                    const unitsPerPack = it.product.units_per_pack ?? 1;
+                    const linePrice = isPack ? pricePerUnit * unitsPerPack : pricePerUnit;
+                    return sum + linePrice * it.quantity;
+                  }, 0);
+
+                  const totalItemsCount = cart.items.reduce((s, it) => s + it.quantity, 0);
+
+                  // نص رسالة واتساب الجاهزة
+                  const productsSummary = cart.items
+                    .map(it => `• ${it.product.name} (${it.quantity} ${it.purchase_mode === 'pack' ? (it.product.pack_label || 'كرتونة') : it.product.unit})`)
+                    .join('%0A');
+                  const whatsappMessage = `السلام عليكم أخي ${clientName}، معك إدارة منصة Fox Way.%0A%0Aلاحظنا أنك بدأت تجهيز طلبية في التطبيق بقيمة *${cartTotal.toLocaleString()} دج* ولم تكمل إرسالها بعد:%0A${productsSummary}%0A%0Aهل تود تأكيدها وتحديد موعد التوصيل لمحلك؟ نحن في الخدمة! 🤝`;
+
+                  return (
+                    <div
+                      key={cart.id}
+                      className="bg-white rounded-2xl border border-amber-200/80 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between animate-fade-in-up"
+                      style={{ animationDelay: `${idx * 40}ms` }}
+                    >
+                      <div>
+                        {/* Header: Name and Total */}
+                        <div className="flex items-start justify-between gap-3 mb-3 border-b border-slate-100 pb-3">
+                          <div>
+                            <h3 className="font-bold text-slate-900 text-base flex items-center gap-1.5">
+                              <span>{clientName}</span>
+                              {p?.shop_type_id && (
+                                <span className="text-[11px] font-normal bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
+                                  {getShopTypeName(p.shop_type_id)}
+                                </span>
+                              )}
+                            </h3>
+                            <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
+                              <span className="flex items-center gap-1">
+                                <MapPin className="w-3.5 h-3.5 text-teal-600" />
+                                {p ? `${getWilayaName(p.wilaya_code)} ${getCommuneName(p.commune_id)}` : 'غير محدد'}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3.5 h-3.5 text-amber-500" />
+                                آخر تحديث: {new Date(cart.updated_at).toLocaleTimeString('ar-DZ', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="text-left shrink-0">
+                            <span className="text-xs text-slate-400 block">قيمة السلة</span>
+                            <span className="text-lg font-extrabold text-teal-600">{formatDA(cartTotal)}</span>
+                          </div>
+                        </div>
+
+                        {/* Items in Cart */}
+                        <div className="mb-4">
+                          <p className="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
+                            <span>📦 السلع في السلة ({totalItemsCount}):</span>
+                          </p>
+                          <div className="bg-slate-50 rounded-xl p-2.5 space-y-1.5 max-h-36 overflow-y-auto">
+                            {cart.items.map((it, i) => {
+                              const isPack = it.purchase_mode === 'pack' && !!it.product.units_per_pack;
+                              const label = isPack ? (it.product.pack_label || 'كرتونة') : it.product.unit;
+                              return (
+                                <div key={i} className="flex items-center justify-between text-xs text-slate-700">
+                                  <span className="truncate max-w-[65%] font-medium">
+                                    • {it.product.name}
+                                  </span>
+                                  <span className="font-bold text-teal-700 bg-white px-2 py-0.5 rounded border border-slate-200">
+                                    {it.quantity} {label}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action buttons: Phone Call & WhatsApp */}
+                      <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
+                        {phone ? (
+                          <>
+                            <a
+                              href={`tel:${phone}`}
+                              className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm shadow-teal-600/20 transition-all"
+                            >
+                              <Phone className="w-3.5 h-3.5" />
+                              <span>اتصال بالهاتف</span>
+                            </a>
+
+                            <a
+                              href={`https://wa.me/213${phone.replace(/^0/, '')}?text=${whatsappMessage}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-600/20 transition-all"
+                            >
+                              <span>💬 تذكير بـ واتساب</span>
+                            </a>
+                          </>
+                        ) : (
+                          <span className="text-xs text-slate-400 text-center w-full">لا يوجد رقم هاتف مسجل</span>
+                        )}
                       </div>
                     </div>
                   );

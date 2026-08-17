@@ -4,9 +4,10 @@ import { supabase } from '@/lib/supabase';
 
 interface CartContextValue {
   items: CartItem[];
-  addToCart: (product: Product, quantity?: number) => void;
+  addToCart: (product: Product, quantity?: number, mode?: 'unit' | 'pack') => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
+  updateMode: (productId: string, mode: 'unit' | 'pack') => void;
   clearCart: () => void;
   totalItems: number;
   subtotal: number;
@@ -118,17 +119,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // ————————————————————————————————
   // عمليات السلة
   // ————————————————————————————————
-  const addToCart = useCallback((product: Product, quantity = 1) => {
+  const addToCart = useCallback((product: Product, quantity = 1, mode: 'unit' | 'pack' = 'unit') => {
     setItems((prev) => {
       const existing = prev.find((item) => item.product.id === product.id);
       if (existing) {
         return prev.map((item) =>
           item.product.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: item.quantity + quantity, purchase_mode: mode }
             : item
         );
       }
-      return [...prev, { product, quantity }];
+      return [...prev, { product, quantity, purchase_mode: mode }];
     });
   }, []);
 
@@ -148,6 +149,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const updateMode = useCallback((productId: string, mode: 'unit' | 'pack') => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.product.id === productId ? { ...item, purchase_mode: mode } : item
+      )
+    );
+  }, []);
+
   const clearCart = useCallback(() => {
     setItems([]);
     try { localStorage.removeItem(CART_STORAGE_KEY); } catch { /* تجاهل */ }
@@ -159,14 +168,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [userId]);
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-  const subtotal = items.reduce(
-    (sum, item) => sum + item.product.price * item.quantity,
-    0
-  );
+  // الإجمالي: يستخدم pack_price (سعر الحبة بالكرتون) إذا وُجد، وإلا سعر الحبة العادي
+  const subtotal = items.reduce((sum, item) => {
+    const { product, quantity, purchase_mode } = item;
+    const unitsPerPack = product.units_per_pack ?? 1;
+    if (purchase_mode === 'pack') {
+      // سعر الحبة عند الشراء بالكرتونة (pack_price) أو سعر الحبة العادي كبديل
+      const pricePerUnit = product.pack_price ?? product.price;
+      return sum + pricePerUnit * unitsPerPack * quantity;
+    }
+    return sum + product.price * quantity;
+  }, 0);
 
   return (
     <CartContext.Provider
-      value={{ items, addToCart, removeFromCart, updateQuantity, clearCart, totalItems, subtotal }}
+      value={{ items, addToCart, removeFromCart, updateQuantity, updateMode, clearCart, totalItems, subtotal }}
     >
       {children}
     </CartContext.Provider>
