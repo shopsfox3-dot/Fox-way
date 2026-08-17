@@ -187,3 +187,41 @@ FROM (VALUES
 ) AS v(cat_name, name, description, price, unit, stock, sort_order)
 JOIN public.categories c ON c.name = v.cat_name
 ON CONFLICT DO NOTHING;
+
+-- =========================================================
+-- 5. جدول مسودة السلة (Cart Drafts) - يحفظ سلة كل عميل بحسابه
+-- يضمن ظهور السلة في أي جهاز (هاتف، تابلت، حاسوب) بنفس الحساب
+-- =========================================================
+CREATE TABLE IF NOT EXISTS public.cart_drafts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  items jsonb NOT NULL DEFAULT '[]'::jsonb,
+  updated_at timestamptz DEFAULT now(),
+  UNIQUE(user_id)
+);
+
+ALTER TABLE public.cart_drafts ENABLE ROW LEVEL SECURITY;
+
+-- العميل يقدر يقرأ سلته فقط
+DROP POLICY IF EXISTS "user_read_own_cart" ON public.cart_drafts;
+CREATE POLICY "user_read_own_cart" ON public.cart_drafts
+  FOR SELECT TO authenticated
+  USING (auth.uid() = user_id);
+
+-- العميل يقدر يكتب/يعدّل سلته فقط
+DROP POLICY IF EXISTS "user_upsert_own_cart" ON public.cart_drafts;
+CREATE POLICY "user_upsert_own_cart" ON public.cart_drafts
+  FOR INSERT TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "user_update_own_cart" ON public.cart_drafts;
+CREATE POLICY "user_update_own_cart" ON public.cart_drafts
+  FOR UPDATE TO authenticated
+  USING (auth.uid() = user_id);
+
+-- العميل يقدر يمسح سلته عند إرسال الطلب
+DROP POLICY IF EXISTS "user_delete_own_cart" ON public.cart_drafts;
+CREATE POLICY "user_delete_own_cart" ON public.cart_drafts
+  FOR DELETE TO authenticated
+  USING (auth.uid() = user_id);
+
