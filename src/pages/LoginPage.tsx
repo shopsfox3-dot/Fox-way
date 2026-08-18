@@ -211,7 +211,7 @@ export default function LoginPage() {
       }
 
       if (data?.user) {
-        const { data: profile } = await supabase.from('profiles').select('status, role').eq('id', data.user.id).single();
+        const { data: profile } = await supabase.from('profiles').select('status, role').eq('id', data.user.id).maybeSingle();
         if (profile && profile.status !== 'approved' && profile.role !== 'admin') {
            logFailedLogin(cleanEmail, 'حساب غير معتمد حاول الدخول', 'blocked_unapproved', password);
            await supabase.auth.signOut();

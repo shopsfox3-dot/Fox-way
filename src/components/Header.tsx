@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { ShoppingCart, Truck, LogOut, MapPin, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
-import { supabase } from '@/lib/supabase';
 
 interface HeaderProps {
   onNavigate: (page: 'home' | 'cart' | 'admin') => void;

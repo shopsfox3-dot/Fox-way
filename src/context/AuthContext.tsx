@@ -84,9 +84,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       Sentry.setTag('role', profile.role || 'none');
     } else {
       Sentry.setUser(null);
-      Sentry.setTag('wilaya', null);
-      Sentry.setTag('shop_type', null);
-      Sentry.setTag('role', null);
+      Sentry.setTags({
+        wilaya: undefined,
+        shop_type: undefined,
+        role: undefined,
+      });
     }
   }, [profile]);
 

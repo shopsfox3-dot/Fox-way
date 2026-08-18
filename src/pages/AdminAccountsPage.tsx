@@ -39,7 +39,6 @@ import {
   KeyRound,
   Package,
   AlertTriangle,
-  Layers,
   ShoppingBag,
 } from 'lucide-react';
 
@@ -54,6 +53,7 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [shopTypes, setShopTypes] = useState<ShopType[]>([]);
   const [wilayas, setWilayas] = useState<Wilaya[]>([]);
+  const [allCommunes, setAllCommunes] = useState<Commune[]>([]);
   const [loginAttempts, setLoginAttempts] = useState<LoginAttempt[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -228,8 +228,6 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
     if (!p.startsWith('0') && p.length === 9) p = '0' + p;
     return p;
   };
-
-  const [allCommunes, setAllCommunes] = useState<Commune[]>([]);
 
   const getWilayaName = (code: string | null) => {
     if (!code) return 'غير محدد';
