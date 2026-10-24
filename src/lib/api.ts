@@ -1,4 +1,4 @@
-import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import type { Wilaya, Commune, Category, Product, ShopType } from '@/types';
 
 // تحميل البيانات المحلية بشكل lazy لتقليل حجم الـ bundle الرئيسي
@@ -199,7 +199,6 @@ export async function upsertProfile(
       shop_type_id: shopTypeId ?? null,
       first_name: firstName ?? null,
       last_name: lastName ?? null,
-      status: 'pending'
     });
   } catch (error) {
     console.error('Error updating profile:', error);
@@ -257,7 +256,7 @@ export async function fetchLoginAttempts(): Promise<import('@/types').LoginAttem
 
 export async function deleteLoginAttempt(attemptId: string): Promise<boolean> {
   try {
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('login_attempts')
       .delete()
       .eq('id', attemptId);
@@ -269,7 +268,7 @@ export async function deleteLoginAttempt(attemptId: string): Promise<boolean> {
 
 export async function clearAllLoginAttempts(): Promise<boolean> {
   try {
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('login_attempts')
       .delete()
       .neq('id', '00000000-0000-0000-0000-000000000000');
@@ -307,6 +306,19 @@ export async function updateProfileStatus(profileId: string, status: 'approved' 
     return !error;
   } catch {
     return false;
+  }
+}
+
+export async function deleteUserAccount(profileId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase.rpc('delete_user_account', { target_user_id: profileId });
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'تعذر حذف الحساب';
+    return { success: false, error: message };
   }
 }
 

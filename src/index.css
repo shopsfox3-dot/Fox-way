@@ -11,7 +11,7 @@
     overflow-x: hidden;
   }
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    @apply bg-[#09090b] text-zinc-100 antialiased selection:bg-emerald-500/30 selection:text-emerald-300;
     overflow-x: hidden;
   }
 }
@@ -39,21 +39,24 @@ input:-webkit-autofill:hover,
 input:-webkit-autofill:focus, 
 input:-webkit-autofill:active {
   transition: background-color 5000s ease-in-out 0s !important;
-  -webkit-text-fill-color: white !important;
+  -webkit-text-fill-color: #fafafa !important;
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-teal-600 text-white font-semibold rounded-xl px-5 py-3 transition-all duration-200 hover:bg-teal-700 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-gradient-to-r from-emerald-500 to-teal-500 text-zinc-950 font-bold rounded-xl px-5 py-3 transition-all duration-200 hover:brightness-110 hover:shadow-neon-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-md;
   }
   .btn-secondary {
-    @apply bg-white text-slate-700 font-semibold rounded-xl px-5 py-3 border border-slate-200 transition-all duration-200 hover:border-teal-400 hover:text-teal-600 active:scale-95;
+    @apply bg-zinc-900 text-zinc-200 font-semibold rounded-xl px-5 py-3 border border-zinc-800 transition-all duration-200 hover:border-zinc-700 hover:bg-zinc-800 hover:text-white active:scale-95;
   }
   .input-field {
-    @apply w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 transition-colors duration-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none;
+    @apply w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-4 py-3 text-zinc-100 placeholder:text-zinc-500 transition-colors duration-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none;
   }
   .card {
-    @apply bg-white rounded-2xl border border-slate-100 shadow-sm;
+    @apply bg-[#121215] rounded-2xl border border-zinc-800/80 shadow-glass-subtle;
+  }
+  .glass-card {
+    @apply backdrop-blur-xl bg-zinc-900/60 border border-white/10 shadow-2xl;
   }
 }
 
@@ -70,41 +73,43 @@ html, body, * {
   background: transparent !important;
 }
 
-/* Explicit Scrollbar for select menus and option lists */
-select,
-select option,
+/* Custom Emerald Neon Scrollbar for Select Dropdowns (Fox-Way & Higgsfield Aesthetic) */
 .select-dropdown-scroll {
-  -ms-overflow-style: auto !important;
   scrollbar-width: thin !important;
-  scrollbar-color: #0d9488 #0f172a !important;
+  scrollbar-color: #10b981 #18181b !important;
+  -ms-overflow-style: auto !important;
+  overflow-y: auto !important;
 }
 
-select::-webkit-scrollbar,
-select option::-webkit-scrollbar,
 .select-dropdown-scroll::-webkit-scrollbar {
   display: block !important;
-  width: 6px !important;
-  height: 6px !important;
+  width: 5px !important;
+  height: 5px !important;
 }
 
-select::-webkit-scrollbar-track,
-select option::-webkit-scrollbar-track,
 .select-dropdown-scroll::-webkit-scrollbar-track {
-  background: #0f172a !important;
+  background: #18181b !important;
   border-radius: 9999px !important;
+  margin: 4px 0 !important;
 }
 
-select::-webkit-scrollbar-thumb,
-select option::-webkit-scrollbar-thumb,
 .select-dropdown-scroll::-webkit-scrollbar-thumb {
-  background: #0d9488 !important;
+  background: #10b981 !important;
   border-radius: 9999px !important;
 }
 
-select::-webkit-scrollbar-thumb:hover,
-select option::-webkit-scrollbar-thumb:hover,
 .select-dropdown-scroll::-webkit-scrollbar-thumb:hover {
-  background: #0f766e !important;
+  background: #34d399 !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.6) !important;
+}
+
+.select-dropdown-scroll::-webkit-scrollbar-button,
+.select-dropdown-scroll::-webkit-scrollbar-button:single-button,
+.select-dropdown-scroll::-webkit-scrollbar-button:vertical:decrement,
+.select-dropdown-scroll::-webkit-scrollbar-button:vertical:increment {
+  display: none !important;
+  width: 0px !important;
+  height: 0px !important;
 }
 
 /* Animations */
@@ -174,3 +179,129 @@ select option::-webkit-scrollbar-thumb:hover,
 .animate-blob {
   animation: blob 8s infinite ease-in-out;
 }
+
+/* --- Animated Delivery Truck & Road Styles --- */
+@keyframes truckBounce {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-2.5px);
+  }
+}
+
+.animate-truck-bounce {
+  animation: truckBounce 0.45s ease-in-out infinite;
+}
+
+@keyframes roadMove {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(50%);
+  }
+}
+
+.animate-road-move {
+  animation: roadMove 0.5s linear infinite;
+}
+
+@keyframes windStreaks {
+  0% {
+    transform: translateX(30px);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(-90px);
+    opacity: 0;
+  }
+}
+
+.animate-wind-1 {
+  animation: windStreaks 0.7s ease-out infinite;
+}
+
+.animate-wind-2 {
+  animation: windStreaks 0.9s ease-out 0.2s infinite;
+}
+
+.animate-wind-3 {
+  animation: windStreaks 0.6s ease-out 0.4s infinite;
+}
+
+/* --- Fiat Doblò & Coastal Highway Animation (Lamma Style) --- */
+@keyframes roadPerspective {
+  0% {
+    transform: translateY(-80px) scale(0.6);
+    opacity: 0.2;
+  }
+  30% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(180px) scale(1.3);
+    opacity: 0.1;
+  }
+}
+
+.animate-road-perspective {
+  animation: roadPerspective 0.6s linear infinite;
+}
+
+@keyframes dobloDrive {
+  0%, 100% {
+    transform: translate(-50%, 0px) rotate(0deg);
+  }
+  25% {
+    transform: translate(calc(-50% + 3px), -2px) rotate(0.8deg);
+  }
+  50% {
+    transform: translate(-50%, -1px) rotate(0deg);
+  }
+  75% {
+    transform: translate(calc(-50% - 3px), -2.5px) rotate(-0.8deg);
+  }
+}
+
+.animate-doblo-drive {
+  animation: dobloDrive 2.4s ease-in-out infinite;
+}
+
+@keyframes shadowPulse {
+  0%, 100% {
+    transform: translate(-50%, 0px) scale(1);
+    opacity: 0.65;
+  }
+  50% {
+    transform: translate(-50%, 0px) scale(0.94);
+    opacity: 0.45;
+  }
+}
+
+.animate-shadow-pulse {
+  animation: shadowPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes swaySlow {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(2deg);
+  }
+}
+
+.animate-sway-slow {
+  animation: swaySlow 4s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+.animate-sway-slow-delayed {
+  animation: swaySlow 5s ease-in-out 1s infinite;
+  transform-origin: bottom center;
+}
+

@@ -34,8 +34,8 @@ function AppContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-[#09090b]">
+        <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
       </div>
     );
   }
@@ -63,7 +63,7 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#09090b] text-zinc-100">
       <Header onNavigate={navigate} currentPage={page} />
       <main>
         {page === 'home' && <HomePage onSelectCategory={selectCategory} />}

@@ -56,22 +56,22 @@ function CustomSelect({
       {open && !disabled && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute z-50 right-0 left-0 bottom-full mb-1 max-h-52 flex flex-col bg-slate-900 border border-teal-500/50 rounded-xl shadow-2xl p-1.5 text-right">
+          <div className="absolute z-50 right-0 left-0 bottom-full mb-1 max-h-52 flex flex-col bg-[#18181b] border border-zinc-800/90 rounded-xl shadow-2xl p-1.5 text-right ring-1 ring-white/5">
             {options.length > 5 && (
-              <div className="p-1 mb-1 border-b border-slate-800">
+              <div className="p-1 mb-1 border-b border-zinc-800">
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={searchPlaceholder}
-                  className="w-full bg-slate-800 text-white placeholder-slate-400 text-xs rounded-lg px-2.5 py-1.5 outline-none border border-slate-700 focus:border-teal-500 text-right"
+                  className="w-full bg-zinc-900/90 text-white placeholder-zinc-500 text-xs rounded-lg px-2.5 py-1.5 outline-none border border-zinc-800 focus:border-emerald-500 text-right"
                   autoFocus
                 />
               </div>
             )}
             <div className="overflow-y-auto max-h-36 select-dropdown-scroll space-y-0.5">
               {filtered.length === 0 ? (
-                <div className="text-center py-2 text-xs text-slate-400">لا توجد نتائج</div>
+                <div className="text-center py-2 text-xs text-zinc-500">لا توجد نتائج</div>
               ) : (
                 filtered.map((opt) => (
                   <button
@@ -79,11 +79,11 @@ function CustomSelect({
                     type="button"
                     onClick={() => { onChange(opt.id); setOpen(false); }}
                     className={`w-full text-right px-2.5 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-between gap-2 ${
-                      value === opt.id ? 'bg-teal-600 text-white font-bold' : 'text-slate-200 hover:bg-slate-800'
+                      value === opt.id ? 'bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30' : 'text-zinc-300 hover:bg-zinc-800/80'
                     }`}
                   >
                     <span className="truncate">{opt.name}</span>
-                    {value === opt.id && <Check className="w-3.5 h-3.5 text-white shrink-0" />}
+                    {value === opt.id && <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
                   </button>
                 ))
               )}
@@ -213,7 +213,7 @@ export default function LoginPage() {
       if (data?.user) {
         const { data: profile } = await supabase.from('profiles').select('status, role').eq('id', data.user.id).maybeSingle();
         if (profile && profile.status !== 'approved' && profile.role !== 'admin') {
-           logFailedLogin(cleanEmail, 'حساب غير معتمد حاول الدخول', 'blocked_unapproved', password);
+           logFailedLogin(cleanEmail, 'حساب غير معتمد حاول الدخول', 'blocked_unapproved');
            await supabase.auth.signOut();
            setError("عذراً، حسابك لا يزال قيد المراجعة ولم يتم تفعيله بعد.");
            return;
@@ -238,6 +238,16 @@ export default function LoginPage() {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
+        options: {
+          data: {
+            phone: cleanPhone(),
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
+            wilaya_code: selectedWilaya,
+            commune_id: selectedCommune,
+            shop_type_id: selectedShopType,
+          },
+        },
       });
       
       if (signUpError) {
@@ -308,19 +318,19 @@ export default function LoginPage() {
     <GlassShell
       title="Fox Way"
       subtitle="المنصة الأذكى لتوزيع الجملة"
-      maxWidth={mode === 'signin' ? "max-w-[360px] sm:max-w-[420px] md:max-w-[450px]" : "max-w-[340px] sm:max-w-[390px] md:max-w-[420px]"}
+      maxWidth={mode === 'signin' ? 'max-w-[340px] sm:max-w-[390px] md:max-w-[420px]' : 'max-w-[330px] sm:max-w-[380px] md:max-w-[410px]'}
     >
       <form onSubmit={(e) => e.preventDefault()} onKeyDown={handleKeyDown}>
         {mode === 'signin' ? (
         <>
-          <h2 className="text-2xl font-bold text-white mb-1.5">تسجيل الدخول</h2>
-          <p className="text-sm text-slate-300 mb-5">مرحباً بك مجدداً في متجر الجملة</p>
+          <h2 className="text-2xl font-bold text-white mb-1.5 tracking-tight">تسجيل الدخول</h2>
+          <p className="text-sm text-zinc-400 mb-5">مرحباً بك مجدداً في متجر الجملة</p>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs sm:text-sm font-semibold text-slate-200 mb-1">البريد الإلكتروني</label>
+              <label className="block text-xs sm:text-sm font-semibold text-zinc-300 mb-1">البريد الإلكتروني</label>
               <div className="relative">
-                <Mail className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 pointer-events-none" />
+                <Mail className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500 pointer-events-none" />
                 <input
                   type="email"
                   name="email"
@@ -335,9 +345,9 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-xs sm:text-sm font-semibold text-slate-200 mb-1">كلمة المرور</label>
+              <label className="block text-xs sm:text-sm font-semibold text-zinc-300 mb-1">كلمة المرور</label>
               <div className="relative">
-                <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 pointer-events-none" />
+                <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500 pointer-events-none" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   name="password"
@@ -352,7 +362,7 @@ export default function LoginPage() {
                   type="button"
                   tabIndex={-1}
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-400 transition-colors p-1"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-emerald-400 transition-colors p-1"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -369,17 +379,17 @@ export default function LoginPage() {
           <button
             onClick={handleSignIn}
             disabled={!canSubmit() || loading}
-            className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-bold rounded-xl px-4 py-3 sm:py-3.5 shadow-lg shadow-teal-500/30 hover:shadow-teal-500/50 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:-translate-y-0 mt-5 flex items-center justify-center gap-2 text-sm sm:text-base"
+            className="w-full bg-gradient-to-r from-emerald-400 to-teal-500 text-zinc-950 font-extrabold rounded-xl px-4 py-3 sm:py-3.5 shadow-neon-sm hover:shadow-neon-emerald hover:brightness-110 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:-translate-y-0 mt-5 flex items-center justify-center gap-2 text-sm sm:text-base tracking-wide"
           >
             {loading ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : <KeyRound className="w-4.5 h-4.5" />}
             تسجيل الدخول
           </button>
 
-          <p className="text-center text-xs sm:text-sm text-slate-400 mt-5">
+          <p className="text-center text-xs sm:text-sm text-zinc-400 mt-5">
             ليس لديك حساب بعد؟{' '}
             <button
               onClick={() => switchMode('signup')}
-              className="font-bold text-teal-400 hover:text-teal-300 transition-colors"
+              className="font-bold text-emerald-400 hover:text-emerald-300 transition-colors"
             >
               إنشاء حساب
             </button>
@@ -387,8 +397,8 @@ export default function LoginPage() {
         </>
       ) : (
         <>
-          <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">إنشاء حساب جديد</h2>
-          <p className="text-xs sm:text-sm text-slate-300 mb-4">انضم إلى شبكة توزيع Fox Way</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-1 tracking-tight">إنشاء حساب جديد</h2>
+          <p className="text-xs sm:text-sm text-zinc-400 mb-4">انضم إلى شبكة توزيع Fox Way</p>
 
           <div className="space-y-2.5">
             {/* Row 1: Name & Surname */}
@@ -570,17 +580,17 @@ export default function LoginPage() {
           <button
             onClick={handleSignUp}
             disabled={!canSubmit() || loading}
-            className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-bold rounded-xl px-4 py-2.5 shadow-lg shadow-teal-500/30 hover:shadow-teal-500/50 hover:-translate-y-0.5 transition-all disabled:opacity-50 mt-4 flex items-center justify-center gap-2 text-xs sm:text-sm"
+            className="w-full bg-gradient-to-r from-emerald-400 to-teal-500 text-zinc-950 font-extrabold rounded-xl px-4 py-2.5 shadow-neon-sm hover:shadow-neon-emerald hover:brightness-110 hover:-translate-y-0.5 transition-all disabled:opacity-50 mt-4 flex items-center justify-center gap-2 text-xs sm:text-sm tracking-wide"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
             إنشاء حساب
           </button>
 
-          <p className="text-center text-xs text-slate-400 mt-4">
+          <p className="text-center text-xs text-zinc-400 mt-4">
             لديك حساب بالفعل؟{' '}
             <button
               onClick={() => switchMode('signin')}
-              className="font-bold text-teal-400 hover:text-teal-300 transition-colors"
+              className="font-bold text-emerald-400 hover:text-emerald-300 transition-colors"
             >
               تسجيل الدخول
             </button>
@@ -591,3 +601,4 @@ export default function LoginPage() {
     </GlassShell>
   );
 }
+

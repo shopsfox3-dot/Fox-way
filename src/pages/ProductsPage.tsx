@@ -144,16 +144,16 @@ export default function ProductsPage({
       {/* Breadcrumb / back */}
       <button
         onClick={onBack}
-        className="flex items-center gap-2 text-slate-600 hover:text-teal-600 transition-colors mb-4"
+        className="flex items-center gap-2 text-zinc-400 hover:text-emerald-400 transition-colors mb-4 group text-sm font-semibold"
       >
-        <ArrowRight className="w-5 h-5" />
+        <ArrowRight className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
         <span>العودة للأقسام</span>
       </button>
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">{activeCategoryName}</h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <h1 className="text-2xl font-extrabold text-white tracking-tight">{activeCategoryName}</h1>
+          <p className="text-zinc-500 text-sm mt-1">
             {loading ? '...' : `${filteredProducts.length} من إجمالي ${products.length} منتج`}
           </p>
         </div>
@@ -161,18 +161,18 @@ export default function ProductsPage({
         {/* Search in category */}
         {products.length > 0 && (
           <div className="relative w-full md:w-72">
-            <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400 pointer-events-none" />
             <input
               type="text"
               value={filterTerm}
               onChange={(e) => setFilterTerm(e.target.value)}
               placeholder="تصفية المنتجات هنا..."
-              className="w-full bg-white border border-slate-200 focus:border-teal-500 rounded-xl pr-10 pl-9 py-2 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500/10 transition-all text-right shadow-sm"
+              className="w-full bg-[#121215] border border-zinc-800 focus:border-emerald-500 rounded-xl pr-10 pl-9 py-2 text-xs sm:text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all text-right shadow-sm"
             />
             {filterTerm && (
               <button
                 onClick={() => setFilterTerm('')}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-white"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -189,8 +189,8 @@ export default function ProductsPage({
             onClick={() => setSelectedCatId('all')}
             className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold shrink-0 transition-all flex items-center gap-2 ${
               selectedCatId === 'all'
-                ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20 scale-[1.02]'
-                : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 hover:border-slate-300'
+                ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-zinc-950 shadow-neon-sm scale-[1.02]'
+                : 'bg-[#121215] text-zinc-300 hover:text-white hover:bg-zinc-800 border border-zinc-800'
             }`}
           >
             <Layers className="w-4 h-4" />
@@ -198,8 +198,8 @@ export default function ProductsPage({
             <span
               className={`text-[11px] px-1.5 py-0.5 rounded-full ${
                 selectedCatId === 'all'
-                  ? 'bg-teal-700/80 text-teal-100'
-                  : 'bg-slate-100 text-slate-500'
+                  ? 'bg-zinc-950/40 text-zinc-950 font-black'
+                  : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
               }`}
             >
               {totalAllCount}
@@ -218,17 +218,17 @@ export default function ProductsPage({
                 onClick={() => setSelectedCatId(cat.id)}
                 className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold shrink-0 transition-all flex items-center gap-2 ${
                   isSelected
-                    ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20 scale-[1.02]'
-                    : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 hover:border-slate-300'
+                    ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-zinc-950 shadow-neon-sm scale-[1.02]'
+                    : 'bg-[#121215] text-zinc-300 hover:text-white hover:bg-zinc-800 border border-zinc-800'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isSelected ? 'text-teal-100' : 'text-teal-600'}`} />
+                <Icon className={`w-4 h-4 ${isSelected ? 'text-zinc-950 font-bold' : 'text-emerald-400'}`} />
                 <span>{cat.name}</span>
                 <span
                   className={`text-[11px] px-1.5 py-0.5 rounded-full ${
                     isSelected
-                      ? 'bg-teal-700/80 text-teal-100'
-                      : 'bg-slate-100 text-slate-500'
+                      ? 'bg-zinc-950/40 text-zinc-950 font-black'
+                      : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
                   }`}
                 >
                   {count}
@@ -241,20 +241,20 @@ export default function ProductsPage({
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
+          <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
         </div>
       ) : products.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-          <PackageX className="w-12 h-12 mb-3" />
+        <div className="flex flex-col items-center justify-center py-20 text-zinc-500">
+          <PackageX className="w-12 h-12 mb-3 text-zinc-600" />
           <p>لا توجد منتجات في هذا القسم حالياً</p>
         </div>
       ) : filteredProducts.length === 0 ? (
-        <div className="card p-12 text-center bg-white rounded-2xl border border-slate-200">
-          <PackageX className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-          <h3 className="font-bold text-slate-800 text-base mb-1">
+        <div className="card p-12 text-center bg-[#121215] rounded-2xl border border-zinc-800">
+          <PackageX className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
+          <h3 className="font-bold text-white text-base mb-1">
             لا توجد منتجات تطابق "{filterTerm}"
           </h3>
-          <p className="text-xs text-slate-500 mb-4">جرّب البحث بكلمة أخرى</p>
+          <p className="text-xs text-zinc-400 mb-4">جرّب البحث بكلمة أخرى</p>
           <button onClick={() => setFilterTerm('')} className="btn-primary text-xs">
             مسح التصفية
           </button>
@@ -277,30 +277,30 @@ export default function ProductsPage({
             return (
               <div
                 key={product.id}
-                className="card p-5 flex flex-col animate-fade-in-up"
+                className="card p-5 flex flex-col bg-[#121215] rounded-2xl border border-zinc-800/80 hover:border-zinc-700 hover:shadow-2xl transition-all duration-300 ring-1 ring-white/5 animate-fade-in-up"
                 style={{ animationDelay: `${index * 50}ms`, opacity: 0 }}
               >
                 {/* Product image placeholder */}
-                <div className="w-full h-32 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center mb-4">
-                  <span className="text-4xl font-bold text-slate-300">
+                <div className="w-full h-32 rounded-xl bg-zinc-900 border border-zinc-800/60 flex items-center justify-center mb-4">
+                  <span className="text-4xl font-extrabold text-zinc-700">
                     {product.name.charAt(0)}
                   </span>
                 </div>
 
-                <h3 className="font-bold text-slate-900 mb-1">{product.name}</h3>
+                <h3 className="font-bold text-white mb-1">{product.name}</h3>
                 {product.description && (
-                  <p className="text-sm text-slate-500 mb-3 line-clamp-2">{product.description}</p>
+                  <p className="text-sm text-zinc-400 mb-3 line-clamp-2">{product.description}</p>
                 )}
 
                 {/* زر التبديل حبة/كرتونة */}
                 {hasPack && (
-                  <div className="flex items-center gap-1.5 mb-3 bg-slate-50 rounded-xl p-1 border border-slate-200">
+                  <div className="flex items-center gap-1.5 mb-3 bg-zinc-900/90 rounded-xl p-1 border border-zinc-800">
                     <button
                       onClick={() => mode === 'pack' && toggleMode(product.id)}
                       className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold transition-all ${
                         mode === 'unit'
-                          ? 'bg-white text-teal-700 shadow-sm border border-teal-200'
-                          : 'text-slate-500 hover:text-slate-700'
+                          ? 'bg-[#18181b] text-emerald-400 shadow-sm border border-emerald-500/30'
+                          : 'text-zinc-400 hover:text-white'
                       }`}
                     >
                       <Package className="w-3.5 h-3.5" />
@@ -311,14 +311,14 @@ export default function ProductsPage({
                       onClick={() => mode === 'unit' && toggleMode(product.id)}
                       className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold transition-all ${
                         mode === 'pack'
-                          ? 'bg-white text-teal-700 shadow-sm border border-teal-200'
-                          : 'text-slate-500 hover:text-slate-700'
+                          ? 'bg-[#18181b] text-emerald-400 shadow-sm border border-emerald-500/30'
+                          : 'text-zinc-400 hover:text-white'
                       }`}
                     >
                       <Box className="w-3.5 h-3.5" />
                       <span>بالـ{packLabel}</span>
                       {product.pack_price && product.pack_price < product.price && (
-                        <span className="text-[10px] font-normal text-emerald-600">{formatDA(product.pack_price)}/ح</span>
+                        <span className="text-[10px] font-normal text-emerald-400">{formatDA(product.pack_price)}/ح</span>
                       )}
                     </button>
                   </div>
@@ -327,11 +327,11 @@ export default function ProductsPage({
                 {/* توضيح الكرتونة + شارة التوفير */}
                 {hasPack && mode === 'pack' && (
                   <div className="mb-3 space-y-1">
-                    <p className="text-[11px] text-teal-700 bg-teal-50 border border-teal-200/60 px-2.5 py-1 rounded-lg font-medium">
-                      📦 {packLabel} واحدة = {product.units_per_pack} {product.unit} × {formatDA(unitPrice)} = <strong>{formatDA(packTotal)}</strong>
+                    <p className="text-[11px] text-zinc-300 bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded-lg font-medium">
+                      📦 {packLabel} واحدة = {product.units_per_pack} {product.unit} × {formatDA(unitPrice)} = <strong className="text-emerald-400">{formatDA(packTotal)}</strong>
                     </p>
                     {savings > 0 && (
-                      <p className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2.5 py-1 rounded-lg font-bold">
+                      <p className="text-[11px] text-emerald-300 bg-emerald-950/40 border border-emerald-500/30 px-2.5 py-1 rounded-lg font-bold">
                         🎉 توفّر {formatDA(savings)} لكل {packLabel} مقارنةً بالحبة!
                       </p>
                     )}
@@ -340,35 +340,34 @@ export default function ProductsPage({
 
                 <div className="flex items-center justify-between mb-4 mt-auto">
                   <div>
-                    <p className="text-lg font-bold text-teal-600">
+                    <p className="text-lg font-extrabold text-emerald-400">
                       {mode === 'pack' ? formatDA(packTotal) : formatDA(unitPrice)}
                     </p>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-zinc-500">
                       {mode === 'pack' ? `لكل ${packLabel}` : `للـ${product.unit}`}
                     </p>
                   </div>
                   <div className="text-left">
-                    <p className="text-xs text-slate-400">الإجمالي</p>
-                    <p className="text-sm font-semibold text-slate-700">{formatDA(lineTotal)}</p>
+                    <p className="text-xs text-zinc-500">الإجمالي</p>
+                    <p className="text-sm font-semibold text-zinc-300">{formatDA(lineTotal)}</p>
                   </div>
                 </div>
 
-
                 {/* Quantity + add */}
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center rounded-xl border border-slate-200 overflow-hidden">
+                  <div className="flex items-center rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
                     <button
                       onClick={() => decrement(product.id)}
-                      className="p-2 hover:bg-slate-50 transition-colors text-slate-600"
+                      className="p-2 hover:bg-zinc-800 transition-colors text-zinc-400 hover:text-white"
                     >
                       <Minus className="w-4 h-4" />
                     </button>
-                    <span className="px-4 font-semibold text-slate-900 min-w-[2.5rem] text-center">
+                    <span className="px-4 font-semibold text-white min-w-[2.5rem] text-center">
                       {qty}
                     </span>
                     <button
                       onClick={() => increment(product.id)}
-                      className="p-2 hover:bg-slate-50 transition-colors text-slate-600"
+                      className="p-2 hover:bg-zinc-800 transition-colors text-zinc-400 hover:text-white"
                     >
                       <Plus className="w-4 h-4" />
                     </button>
@@ -384,15 +383,14 @@ export default function ProductsPage({
                   </button>
                 </div>
 
-                {/* حالة التوفر */}
                 {product.market_unavailable ? (
-                  <p className="text-xs text-red-500 font-medium mt-2">⛔ غير متوفر حالياً (منقطع من السوق)</p>
+                  <p className="text-xs text-red-400 font-medium mt-2">⛔ غير متوفر حالياً (منقطع من السوق)</p>
                 ) : product.stock > 0 ? (
-                  <p className="text-xs text-emerald-600 font-medium mt-2">
+                  <p className="text-xs text-emerald-400 font-medium mt-2">
                     متوفر بالمستودع: {product.stock} {product.unit}
                   </p>
                 ) : (
-                  <p className="text-xs text-teal-600 font-medium mt-2">
+                  <p className="text-xs text-teal-400 font-medium mt-2">
                     ⚡ توريد عند الطلب (JIT متاح)
                   </p>
                 )}

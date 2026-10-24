@@ -100,12 +100,12 @@ export default function CartPage({ onBack }: CartPageProps) {
   if (success) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16">
-        <div className="card p-8 text-center animate-scale-in">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle2 className="w-8 h-8 text-green-600" />
+        <div className="card p-8 text-center bg-[#121215] border border-zinc-800 shadow-2xl animate-scale-in ring-1 ring-white/5">
+          <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-neon-sm">
+            <CheckCircle2 className="w-8 h-8 text-emerald-400" />
           </div>
-          <h2 className="text-xl font-bold text-slate-900 mb-2">تم إرسال طلبك بنجاح!</h2>
-          <p className="text-slate-500 mb-6">
+          <h2 className="text-xl font-bold text-white mb-2">تم إرسال طلبك بنجاح!</h2>
+          <p className="text-zinc-400 mb-6 text-sm">
             سيتم التواصل معك لتأكيد الطلب وتحديد موعد التوصيل
           </p>
           <button onClick={onBack} className="btn-primary">
@@ -120,38 +120,40 @@ export default function CartPage({ onBack }: CartPageProps) {
     <div className="max-w-4xl mx-auto px-4 py-6">
       <button
         onClick={onBack}
-        className="flex items-center gap-2 text-slate-600 hover:text-teal-600 transition-colors mb-4"
+        className="flex items-center gap-2 text-zinc-400 hover:text-emerald-400 transition-colors mb-4 group text-sm font-semibold"
       >
-        <ArrowRight className="w-5 h-5" />
+        <ArrowRight className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
         <span>متابعة التسوق</span>
       </button>
 
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <ShoppingCart className="w-6 h-6 text-teal-600" />
-          <h1 className="text-2xl font-bold text-slate-900">سلة المشتريات</h1>
+          <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 text-emerald-400 flex items-center justify-center">
+            <ShoppingCart className="w-5 h-5" />
+          </div>
+          <h1 className="text-2xl font-extrabold text-white tracking-tight">سلة المشتريات</h1>
           {totalItems > 0 && (
-            <span className="bg-teal-100 text-teal-700 text-sm font-semibold rounded-full px-3 py-1">
+            <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold rounded-full px-3 py-1">
               {totalItems} عناصر
             </span>
           )}
         </div>
 
         {totalSavings > 0 && (
-          <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm">
-            <Sparkles className="w-4 h-4 text-emerald-600 animate-pulse" />
+          <div className="flex items-center gap-1.5 bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 px-3 py-1.5 rounded-xl text-xs font-bold shadow-neon-sm">
+            <Sparkles className="w-4 h-4 text-emerald-400 animate-pulse" />
             <span>وفّرت {formatDA(totalSavings)} بفضل شراء الكراتين!</span>
           </div>
         )}
       </div>
 
       {items.length === 0 ? (
-        <div className="card p-12 text-center">
-          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <PackageX className="w-8 h-8 text-slate-400" />
+        <div className="card p-12 text-center bg-[#121215] border border-zinc-800 ring-1 ring-white/5">
+          <div className="w-16 h-16 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center mx-auto mb-4 text-zinc-600">
+            <PackageX className="w-8 h-8" />
           </div>
-          <h3 className="font-bold text-slate-700 mb-1">سلتك فارغة</h3>
-          <p className="text-sm text-slate-500 mb-6">ابدأ بإضافة منتجات من الأقسام</p>
+          <h3 className="font-bold text-white mb-1">سلتك فارغة</h3>
+          <p className="text-sm text-zinc-400 mb-6">ابدأ بإضافة منتجات من الأقسام</p>
           <button onClick={onBack} className="btn-primary inline-flex items-center gap-2">
             <ShoppingBag className="w-4 h-4" />
             تصفح المنتجات
@@ -177,12 +179,12 @@ export default function CartPage({ onBack }: CartPageProps) {
               return (
                 <div
                   key={product.id}
-                  className="card p-4 flex flex-col sm:flex-row sm:items-center gap-4 animate-fade-in-up"
+                  className="card p-4 flex flex-col sm:flex-row sm:items-center gap-4 bg-[#121215] border border-zinc-800/80 ring-1 ring-white/5 animate-fade-in-up"
                   style={{ animationDelay: `${index * 40}ms`, opacity: 0 }}
                 >
                   {/* Image placeholder */}
-                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shrink-0">
-                    <span className="text-xl font-bold text-slate-300">
+                  <div className="w-16 h-16 rounded-xl bg-zinc-900 border border-zinc-800/60 flex items-center justify-center shrink-0">
+                    <span className="text-xl font-bold text-zinc-700">
                       {product.name.charAt(0)}
                     </span>
                   </div>
@@ -190,10 +192,10 @@ export default function CartPage({ onBack }: CartPageProps) {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <h3 className="font-semibold text-slate-900 text-sm sm:text-base">{product.name}</h3>
+                      <h3 className="font-bold text-white text-sm sm:text-base">{product.name}</h3>
                       {hasPack && (
                         <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold flex items-center gap-1 ${
-                          isPack ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 border border-slate-200'
+                          isPack ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
                         }`}>
                           {isPack ? <Box className="w-3 h-3" /> : <Package className="w-3 h-3" />}
                           {isPack ? `بال${packLabel}` : 'بالحبة'}
@@ -201,12 +203,12 @@ export default function CartPage({ onBack }: CartPageProps) {
                       )}
                     </div>
 
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-zinc-400">
                       {isPack ? (
                         <>
-                          <span className="font-semibold text-teal-700">{formatDA(unitLinePrice)}</span> لكل {packLabel}
+                          <span className="font-semibold text-emerald-400">{formatDA(unitLinePrice)}</span> لكل {packLabel}
                           {product.pack_price && product.pack_price < product.price && (
-                            <span className="mr-1.5 text-[11px] text-emerald-600">({formatDA(product.pack_price)} / {product.unit})</span>
+                            <span className="mr-1.5 text-[11px] text-emerald-500/90">({formatDA(product.pack_price)} / {product.unit})</span>
                           )}
                         </>
                       ) : (
@@ -218,11 +220,11 @@ export default function CartPage({ onBack }: CartPageProps) {
                     {hasPack && (
                       <div className="mt-2 flex items-center gap-2 flex-wrap">
                         {isPack ? (
-                          <span className="text-[11px] bg-teal-50 text-teal-800 border border-teal-200/80 px-2.5 py-0.5 rounded-lg font-medium">
-                            🔄 المحول: {quantity} {packLabel} = <strong>{totalPieces} {product.unit}</strong>
+                          <span className="text-[11px] bg-zinc-900 text-zinc-300 border border-zinc-800 px-2.5 py-0.5 rounded-lg font-medium">
+                            🔄 المحول: {quantity} {packLabel} = <strong className="text-emerald-400">{totalPieces} {product.unit}</strong>
                           </span>
                         ) : (
-                          <span className="text-[11px] bg-slate-50 text-slate-600 border border-slate-200 px-2.5 py-0.5 rounded-lg font-medium">
+                          <span className="text-[11px] bg-zinc-900 text-zinc-400 border border-zinc-800 px-2.5 py-0.5 rounded-lg font-medium">
                             🔄 المحول: {quantity} {product.unit} {(quantity >= unitsPerPack) ? `(يعادل ${(quantity / unitsPerPack).toFixed(1)} ${packLabel})` : ''}
                           </span>
                         )}
@@ -230,7 +232,7 @@ export default function CartPage({ onBack }: CartPageProps) {
                         {/* زر التبديل السريع من السلة */}
                         <button
                           onClick={() => updateMode(product.id, isPack ? 'unit' : 'pack')}
-                          className="text-[11px] text-teal-600 hover:text-teal-800 font-bold underline"
+                          className="text-[11px] text-emerald-400 hover:text-emerald-300 font-bold underline"
                         >
                           تحويل إلى {isPack ? 'حبات' : packLabel}
                         </button>
@@ -238,35 +240,35 @@ export default function CartPage({ onBack }: CartPageProps) {
                     )}
 
                     {product.market_unavailable ? (
-                      <span className="text-[11px] text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md font-semibold inline-block mt-1">
+                      <span className="text-[11px] text-red-400 bg-red-950/30 border border-red-500/30 px-2 py-0.5 rounded-md font-semibold inline-block mt-1">
                         ⛔ منقطع من السوق حالياً
                       </span>
                     ) : product.stock <= 0 ? (
-                      <span className="text-[11px] text-teal-700 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-md font-medium inline-block mt-1">
+                      <span className="text-[11px] text-teal-400 bg-teal-950/30 border border-teal-500/30 px-2 py-0.5 rounded-md font-medium inline-block mt-1">
                         ⚡ توريد عند الطلب (JIT)
                       </span>
                     ) : (
-                      <span className="text-[11px] text-emerald-600 font-medium block mt-1">
+                      <span className="text-[11px] text-emerald-400 font-medium block mt-1">
                         متوفر بالمستودع: {product.stock} {product.unit}
                       </span>
                     )}
                   </div>
 
                   {/* Quantity controls */}
-                  <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                    <div className="flex items-center rounded-xl border border-slate-200 overflow-hidden shrink-0">
+                  <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-800/80">
+                    <div className="flex items-center rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden shrink-0">
                       <button
                         onClick={() => updateQuantity(product.id, quantity - 1)}
-                        className="p-2 hover:bg-slate-50 transition-colors text-slate-600"
+                        className="p-2 hover:bg-zinc-800 transition-colors text-zinc-400 hover:text-white"
                       >
                         <Minus className="w-4 h-4" />
                       </button>
-                      <span className="px-3 font-semibold text-slate-900 min-w-[2.5rem] text-center">
+                      <span className="px-3 font-semibold text-white min-w-[2.5rem] text-center">
                         {quantity}
                       </span>
                       <button
                         onClick={() => updateQuantity(product.id, quantity + 1)}
-                        className="p-2 hover:bg-slate-50 transition-colors text-slate-600"
+                        className="p-2 hover:bg-zinc-800 transition-colors text-zinc-400 hover:text-white"
                       >
                         <Plus className="w-4 h-4" />
                       </button>
@@ -274,14 +276,14 @@ export default function CartPage({ onBack }: CartPageProps) {
 
                     {/* Line total */}
                     <div className="text-left shrink-0 min-w-[80px]">
-                      <p className="text-[10px] text-slate-400">المجموع</p>
-                      <p className="font-bold text-teal-600 text-sm sm:text-base">{formatDA(lineTotal)}</p>
+                      <p className="text-[10px] text-zinc-500">المجموع</p>
+                      <p className="font-extrabold text-emerald-400 text-sm sm:text-base">{formatDA(lineTotal)}</p>
                     </div>
 
                     {/* Remove */}
                     <button
                       onClick={() => removeFromCart(product.id)}
-                      className="p-2 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors shrink-0"
+                      className="p-2 rounded-lg text-zinc-500 hover:bg-red-500/10 hover:text-red-400 transition-colors shrink-0"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -292,7 +294,7 @@ export default function CartPage({ onBack }: CartPageProps) {
 
             <button
               onClick={clearCart}
-              className="text-sm text-red-500 hover:text-red-600 transition-colors flex items-center gap-1.5 pt-2"
+              className="text-sm text-red-400 hover:text-red-300 transition-colors flex items-center gap-1.5 pt-2"
             >
               <Trash2 className="w-4 h-4" />
               إفراغ السلة
@@ -301,8 +303,8 @@ export default function CartPage({ onBack }: CartPageProps) {
 
           {/* Summary */}
           <div className="lg:col-span-1">
-            <div className="card p-5 sticky top-20">
-              <h2 className="font-bold text-slate-900 mb-4">ملخص الطلب</h2>
+            <div className="card p-5 sticky top-20 bg-[#121215] border border-zinc-800/90 shadow-2xl ring-1 ring-white/5">
+              <h2 className="font-bold text-white mb-4 tracking-tight">ملخص الطلب</h2>
 
               <div className="space-y-3 mb-4 max-h-60 overflow-y-auto pr-1">
                 {items.map((item) => {
@@ -316,10 +318,10 @@ export default function CartPage({ onBack }: CartPageProps) {
 
                   return (
                     <div key={item.product.id} className="flex justify-between text-xs sm:text-sm">
-                      <span className="text-slate-600 truncate max-w-[60%]">
+                      <span className="text-zinc-400 truncate max-w-[60%]">
                         {item.product.name} ({item.quantity} {label})
                       </span>
-                      <span className="font-medium text-slate-700">
+                      <span className="font-semibold text-zinc-200">
                         {formatDA(itemTotal)}
                       </span>
                     </div>
@@ -327,27 +329,27 @@ export default function CartPage({ onBack }: CartPageProps) {
                 })}
               </div>
 
-              <div className="border-t border-slate-100 pt-4 space-y-2">
+              <div className="border-t border-zinc-800 pt-4 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">عدد المنتجات</span>
-                  <span className="font-medium">{totalItems}</span>
+                  <span className="text-zinc-400">عدد المنتجات</span>
+                  <span className="font-medium text-white">{totalItems}</span>
                 </div>
 
                 {totalSavings > 0 && (
-                  <div className="flex justify-between text-sm text-emerald-600 font-bold">
+                  <div className="flex justify-between text-sm text-emerald-400 font-bold">
                     <span>مجموع التوفير</span>
                     <span>-{formatDA(totalSavings)}</span>
                   </div>
                 )}
 
                 <div className="flex justify-between items-center pt-2">
-                  <span className="font-bold text-slate-900">المجموع الكلي</span>
-                  <span className="text-2xl font-bold text-teal-600">{formatDA(subtotal)}</span>
+                  <span className="font-bold text-white">المجموع الكلي</span>
+                  <span className="text-2xl font-black text-emerald-400">{formatDA(subtotal)}</span>
                 </div>
               </div>
 
               {error && (
-                <div className="mt-4 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                <div className="mt-4 rounded-xl bg-red-950/30 border border-red-500/30 px-4 py-3 text-sm text-red-400">
                   {error}
                 </div>
               )}
@@ -365,7 +367,7 @@ export default function CartPage({ onBack }: CartPageProps) {
                 إرسال الطلب
               </button>
 
-              <p className="text-xs text-slate-400 text-center mt-3">
+              <p className="text-xs text-zinc-500 text-center mt-3">
                 سيتم تأكيد الطلب عند التواصل معك
               </p>
             </div>

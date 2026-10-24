@@ -6,6 +6,25 @@ export default {
       fontFamily: {
         sans: ['Cairo', 'sans-serif'],
       },
+      colors: {
+        obsidian: {
+          DEFAULT: '#09090b',
+          deep: '#050507',
+          surface: '#121215',
+          card: '#18181b',
+          muted: '#27272a',
+        },
+        brand: {
+          neon: '#10b981',
+          mint: '#34d399',
+          glow: 'rgba(16, 185, 129, 0.25)',
+        },
+      },
+      boxShadow: {
+        'neon-emerald': '0 0 25px -5px rgba(16, 185, 129, 0.35)',
+        'neon-sm': '0 0 15px -3px rgba(16, 185, 129, 0.25)',
+        'glass-subtle': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+      },
       animation: {
         blob: "blob 7s infinite",
       },

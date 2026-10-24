@@ -22,3 +22,10 @@ dist-ssr
 *.sw?
 .env
 .agents
+
+# Local scratch scripts (contain secrets), CLI temp, tool configs
+scratch/
+supabase/.temp/
+.bolt/
+.env.*
+!.env.example

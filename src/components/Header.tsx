@@ -31,23 +31,25 @@ export default function Header({ onNavigate, currentPage }: HeaderProps) {
   }, [profile?.wilaya_code]);
 
   return (
-    <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-lg border-b border-slate-200">
+    <header className="sticky top-0 z-40 bg-[#09090b]/85 backdrop-blur-xl border-b border-zinc-800/80">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
         {/* Logo */}
         <button
           onClick={() => onNavigate('home')}
-          className="flex items-center gap-2 shrink-0"
+          className="flex items-center gap-2.5 shrink-0 group"
         >
-          <div className="w-10 h-10 bg-teal-600 rounded-xl flex items-center justify-center shadow-md shadow-teal-600/20">
-            <Truck className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 bg-gradient-to-tr from-emerald-400 to-teal-500 rounded-xl flex items-center justify-center shadow-neon-sm ring-1 ring-white/10 group-hover:brightness-110 transition-all">
+            <Truck className="w-5 h-5 text-zinc-950 font-black" />
           </div>
-          <span className="font-bold text-slate-900 hidden sm:block">متجر التوزيع</span>
+          <span className="font-extrabold text-white text-base tracking-tight hidden sm:block">
+            Fox <span className="text-emerald-400">Way</span>
+          </span>
         </button>
 
         {/* Location */}
         {wilayaName && (
-          <div className="hidden md:flex items-center gap-1.5 text-sm text-slate-500">
-            <MapPin className="w-4 h-4 text-teal-600" />
+          <div className="hidden md:flex items-center gap-1.5 text-xs text-zinc-400 bg-zinc-900/80 px-3 py-1.5 rounded-full border border-zinc-800">
+            <MapPin className="w-3.5 h-3.5 text-emerald-400" />
             <span>{wilayaName}</span>
           </div>
         )}
@@ -59,27 +61,27 @@ export default function Header({ onNavigate, currentPage }: HeaderProps) {
               onClick={() => onNavigate(currentPage === 'admin' ? 'home' : 'admin')}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                 currentPage === 'admin'
-                  ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20'
-                  : 'bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-200'
+                  ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-zinc-950 shadow-neon-sm'
+                  : 'bg-zinc-900 text-zinc-300 hover:text-white hover:bg-zinc-800 border border-zinc-800'
               }`}
             >
-              <ShieldCheck className="w-4 h-4" />
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
               <span>لوحة الأدمن</span>
             </button>
           )}
 
           <button
             onClick={() => onNavigate('cart')}
-            className={`relative p-2.5 rounded-xl transition-colors ${
+            className={`relative p-2.5 rounded-xl transition-all ${
               currentPage === 'cart'
-                ? 'bg-teal-50 text-teal-600'
-                : 'text-slate-600 hover:bg-slate-100'
+                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-neon-sm'
+                : 'text-zinc-400 hover:text-white hover:bg-zinc-900 border border-transparent'
             }`}
             aria-label="السلة"
           >
             <ShoppingCart className="w-5 h-5" />
             {totalItems > 0 && (
-              <span className="absolute -top-1 -left-1 bg-teal-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+              <span className="absolute -top-1 -left-1 bg-gradient-to-r from-emerald-400 to-teal-500 text-zinc-950 text-[11px] font-black rounded-full w-5 h-5 flex items-center justify-center shadow-neon-sm">
                 {totalItems}
               </span>
             )}
@@ -90,7 +92,7 @@ export default function Header({ onNavigate, currentPage }: HeaderProps) {
               onNavigate('home');
               signOut();
             }}
-            className="p-2.5 rounded-xl text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors"
+            className="p-2.5 rounded-xl text-zinc-400 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20 border border-transparent transition-all"
             aria-label="تسجيل الخروج"
           >
             <LogOut className="w-5 h-5" />
