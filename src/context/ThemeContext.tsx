@@ -23,7 +23,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } catch {
       // ignore storage access errors
     }
-    return 'dark'; // Default aesthetic for Fox Way
+    return 'light'; // Default: Light Mode for professional B2B appearance
   });
 
   const isDark = theme === 'dark';
