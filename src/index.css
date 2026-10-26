@@ -6,12 +6,11 @@
 
 @layer base {
   html {
-    direction: rtl;
     font-family: 'Cairo', sans-serif;
     overflow-x: hidden;
   }
   body {
-    @apply bg-[#09090b] text-zinc-100 antialiased selection:bg-emerald-500/30 selection:text-emerald-300;
+    @apply bg-slate-50 text-slate-900 dark:bg-[#09090b] dark:text-zinc-100 antialiased selection:bg-emerald-500/30 selection:text-emerald-700 dark:selection:text-emerald-300 transition-colors duration-200;
     overflow-x: hidden;
   }
 }
@@ -33,13 +32,24 @@ input, textarea {
   -webkit-touch-callout: default !important;
 }
 
-/* Fix browser autofill styling for dark theme / transparent inputs */
+/* Fix browser autofill styling for dark and light theme */
 input:-webkit-autofill,
 input:-webkit-autofill:hover, 
 input:-webkit-autofill:focus, 
 input:-webkit-autofill:active {
   transition: background-color 5000s ease-in-out 0s !important;
+}
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover, 
+.dark input:-webkit-autofill:focus, 
+.dark input:-webkit-autofill:active {
   -webkit-text-fill-color: #fafafa !important;
+}
+.light input:-webkit-autofill,
+.light input:-webkit-autofill:hover, 
+.light input:-webkit-autofill:focus, 
+.light input:-webkit-autofill:active {
+  -webkit-text-fill-color: #0f172a !important;
 }
 
 @layer components {
@@ -47,16 +57,16 @@ input:-webkit-autofill:active {
     @apply bg-gradient-to-r from-emerald-500 to-teal-500 text-zinc-950 font-bold rounded-xl px-5 py-3 transition-all duration-200 hover:brightness-110 hover:shadow-neon-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-md;
   }
   .btn-secondary {
-    @apply bg-zinc-900 text-zinc-200 font-semibold rounded-xl px-5 py-3 border border-zinc-800 transition-all duration-200 hover:border-zinc-700 hover:bg-zinc-800 hover:text-white active:scale-95;
+    @apply bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200 font-semibold rounded-xl px-5 py-3 border border-slate-200 dark:border-zinc-800 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white active:scale-95 shadow-sm dark:shadow-none;
   }
   .input-field {
-    @apply w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-4 py-3 text-zinc-100 placeholder:text-zinc-500 transition-colors duration-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none;
+    @apply w-full rounded-xl border border-slate-300 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 px-4 py-3 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 transition-colors duration-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none;
   }
   .card {
-    @apply bg-[#121215] rounded-2xl border border-zinc-800/80 shadow-glass-subtle;
+    @apply bg-white dark:bg-[#121215] rounded-2xl border border-slate-200/90 dark:border-zinc-800/80 shadow-sm dark:shadow-glass-subtle;
   }
   .glass-card {
-    @apply backdrop-blur-xl bg-zinc-900/60 border border-white/10 shadow-2xl;
+    @apply backdrop-blur-xl bg-white/90 dark:bg-zinc-900/60 border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-2xl;
   }
 }
 

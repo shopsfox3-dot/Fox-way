@@ -68,8 +68,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (profile) {
+      const userEmail = session?.user?.email;
       Sentry.setUser({
         id: profile.id,
+        email: userEmail || undefined,
         username: profile.full_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || undefined,
         phone: profile.phone || undefined,
         ip_address: '{{auto}}',
@@ -79,18 +81,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         status: profile.status || undefined,
         role: profile.role || undefined,
       });
+      if (userEmail) Sentry.setTag('email', userEmail);
       Sentry.setTag('wilaya', profile.wilaya_code || 'none');
       Sentry.setTag('shop_type', profile.shop_type_id?.toString() || 'none');
       Sentry.setTag('role', profile.role || 'none');
     } else {
       Sentry.setUser(null);
       Sentry.setTags({
+        email: undefined,
         wilaya: undefined,
         shop_type: undefined,
         role: undefined,
       });
     }
-  }, [profile]);
+  }, [profile, session?.user?.email]);
 
   const signOut = async () => {
     await supabase.auth.signOut();

@@ -1,5 +1,179 @@
 import type { Wilaya, Commune } from '@/types';
 
+export const WILAYA_LATIN_NAMES: Record<string, string> = {
+  '01': 'Adrar',
+  '02': 'Chlef',
+  '03': 'Laghouat',
+  '04': 'Oum El Bouaghi',
+  '05': 'Batna',
+  '06': 'Béjaïa',
+  '07': 'Biskra',
+  '08': 'Béchar',
+  '09': 'Blida',
+  '10': 'Bouira',
+  '11': 'Tamanrasset',
+  '12': 'Tébessa',
+  '13': 'Tlemcen',
+  '14': 'Tiaret',
+  '15': 'Tizi Ouzou',
+  '16': 'Alger',
+  '17': 'Djelfa',
+  '18': 'Jijel',
+  '19': 'Sétif',
+  '20': 'Saïda',
+  '21': 'Skikda',
+  '22': 'Sidi Bel Abbès',
+  '23': 'Annaba',
+  '24': 'Guelma',
+  '25': 'Constantine',
+  '26': 'Médéa',
+  '27': 'Mostaganem',
+  '28': "M'Sila",
+  '29': 'Mascara',
+  '30': 'Ouargla',
+  '31': 'Oran',
+  '32': 'El Bayadh',
+  '33': 'Illizi',
+  '34': 'Bordj Bou Arréridj',
+  '35': 'Boumerdès',
+  '36': 'El Tarf',
+  '37': 'Tindouf',
+  '38': 'Tissemsilt',
+  '39': 'El Oued',
+  '40': 'Khenchela',
+  '41': 'Souk Ahras',
+  '42': 'Tipaza',
+  '43': 'Mila',
+  '44': 'Aïn Defla',
+  '45': 'Naâma',
+  '46': 'Aïn Témouchent',
+  '47': 'Ghardaïa',
+  '48': 'Relizane',
+  '49': 'Timimoun',
+  '50': 'Bordj Badji Mokhtar',
+  '51': 'Ouled Djellal',
+  '52': 'Béni Abbès',
+  '53': 'In Salah',
+  '54': 'In Guezzam',
+  '55': 'Touggourt',
+  '56': 'Djanet',
+  '57': "El M'Ghair",
+  '58': 'El Meniaa',
+  '59': 'Aflou',
+  '60': 'Barika',
+  '61': 'El Kantara',
+  '62': 'Bir El Ater',
+  '63': 'El Aricha',
+  '64': 'Ksar Chellala',
+  '65': 'Aïn Oussera',
+  '66': 'Messaad',
+  '67': 'Ksar El Boukhari',
+  '68': 'Bou Saâda',
+  '69': 'El Abiodh Sidi Cheikh',
+};
+
+export const SHOP_TYPES_I18N: Record<number | string, { ar: string; fr: string; en: string }> = {
+  1: { ar: 'صيدلية', fr: 'Pharmacie', en: 'Pharmacy' },
+  2: { ar: 'كيوسك', fr: 'Kiosque & Tabac', en: 'Kiosk & Newsstand' },
+  3: { ar: 'سوبر ماركت', fr: 'Supermarché / Supérette', en: 'Mini-Market / Supermarket' },
+  4: { ar: 'مستحضرات تجميل', fr: 'Cosmétique & Beauté', en: 'Cosmetics & Beauty' },
+  5: { ar: 'كانكاري', fr: 'Quincaillerie & Droguerie', en: 'Hardware & Tools' },
+};
+
+export function getShopTypeDisplayName(
+  shopType: { id: number | string; name: string } | null | undefined,
+  language: string
+): string {
+  if (!shopType) return '';
+  const idKey = Number(shopType.id);
+  if (SHOP_TYPES_I18N[idKey]) {
+    return language === 'ar' ? SHOP_TYPES_I18N[idKey].ar : language === 'fr' ? SHOP_TYPES_I18N[idKey].fr : SHOP_TYPES_I18N[idKey].en;
+  }
+  const name = shopType.name || '';
+  if (language === 'ar') return name;
+  if (name.includes('صيدل')) return language === 'fr' ? 'Pharmacie' : 'Pharmacy';
+  if (name.includes('كيوسك') || name.includes('كشك')) return language === 'fr' ? 'Kiosque & Tabac' : 'Kiosk & Newsstand';
+  if (name.includes('سوبر') || name.includes('تغذية')) return language === 'fr' ? 'Supermarché / Supérette' : 'Mini-Market / Supermarket';
+  if (name.includes('تجميل') || name.includes('كوسميتيك')) return language === 'fr' ? 'Cosmétique & Beauté' : 'Cosmetics & Beauty';
+  if (name.includes('كانكاري') || name.includes('خردوات')) return language === 'fr' ? 'Quincaillerie' : 'Hardware & Tools';
+  return name;
+}
+
+/**
+ * محرك نقل الحروف الصوتية اللاتينية للبلديات الجزائرية
+ * يحول أسماء البلديات إلى النطق الفرنسي/اللاتيني الرسمي المعتمد في الجزائر
+ */
+export function transliterateAlgerianName(arabicText: string): string {
+  if (!arabicText) return '';
+  let str = arabicText.trim();
+
+  // 1. استبدال البادئات الجزائرية الشائعة
+  const prefixes: [RegExp, string][] = [
+    [/^(أولاد|اولاد)\s+/i, 'Ouled '],
+    [/^(عين)\s+/i, 'Aïn '],
+    [/^(سيدي)\s+/i, 'Sidi '],
+    [/^(بني)\s+/i, 'Béni '],
+    [/^(وادي)\s+/i, 'Oued '],
+    [/^(بئر)\s+/i, 'Bir '],
+    [/^(قصر)\s+/i, 'Ksar '],
+    [/^(برج)\s+/i, 'Bordj '],
+    [/^(أم|ام)\s+/i, 'Oum '],
+    [/^(أبو|ابو)\s+/i, 'Abou '],
+    [/^(بو)\s+/i, 'Bou '],
+    [/^(حمام|حمّام)\s+/i, 'Hammam '],
+    [/^(مرسى)\s+/i, 'Marsa '],
+    [/^(رأس|راس)\s+/i, 'Ras '],
+    [/^(حاسي)\s+/i, 'Hassi '],
+    [/^(الحامة|الحامه)\s+/i, 'El Hamma '],
+    [/^(شعبة|شعبه)\s+/i, 'Chaabet '],
+    [/^(ضاية|ضایه)\s+/i, 'Dhaya '],
+    [/^(تاوزيانت)\s*/i, 'Taouzient'],
+    [/^(تاغيت)\s*/i, 'Taghit'],
+  ];
+
+  let prefixMatch = '';
+  for (const [re, rep] of prefixes) {
+    if (re.test(str)) {
+      prefixMatch = rep;
+      str = str.replace(re, '');
+      break;
+    }
+  }
+
+  // 2. معالجة "الـ" التعريف في الكلمات
+  str = str.replace(/^ال([أإؤئءبتثجحخدذرزسشصضطظعغفقكلمنهوي])/g, 'El $1');
+  str = str.replace(/\s+ال([أإؤئءبتثجحخدذرزسشصضطظعغفقكلمنهوي])/g, ' El $1');
+
+  // 3. النقل الحرفي الصوتي الصامت والمتحرك
+  const map: Record<string, string> = {
+    'أ': 'A', 'إ': 'I', 'آ': 'A', 'ا': 'a', 'ء': '', 'ئ': 'i', 'ؤ': 'ou',
+    'ب': 'b', 'ت': 't', 'ث': 'th', 'ج': 'dj', 'ح': 'h', 'خ': 'kh',
+    'د': 'd', 'ذ': 'dh', 'ر': 'r', 'ز': 'z', 'س': 's', 'ش': 'ch',
+    'ص': 's', 'ض': 'd', 'ط': 't', 'ظ': 'z', 'ع': 'a', 'غ': 'gh',
+    'ف': 'f', 'ق': 'k', 'ك': 'k', 'ل': 'l', 'م': 'm', 'ن': 'n',
+    'ه': 'h', 'و': 'ou', 'ي': 'i', 'ى': 'a', 'ة': 'a',
+    'َ': 'a', 'ُ': 'ou', 'ِ': 'i', 'ّ': '', 'ْ': '', 'ً': '', 'ٍ': '', 'ٌ': '',
+  };
+
+  const words = str.split(/\s+/).map((word) => {
+    let latinWord = '';
+    for (let i = 0; i < word.length; i++) {
+      const char = word[i];
+      if (map[char] !== undefined) {
+        latinWord += map[char];
+      } else {
+        latinWord += char;
+      }
+    }
+    // تنظيف الحروف المكررة والتنسيق
+    latinWord = latinWord.replace(/ouou/g, 'ou').replace(/ii/g, 'i').replace(/aa/g, 'a');
+    return latinWord.charAt(0).toUpperCase() + latinWord.slice(1).toLowerCase();
+  });
+
+  const result = (prefixMatch + words.join(' ')).trim();
+  return result || arabicText;
+}
+
 export const ALL_WILAYAS: Wilaya[] = [
   {
     "id": 1,

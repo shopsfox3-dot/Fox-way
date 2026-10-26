@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { fetchWilayas, fetchCommunes, fetchShopTypes, upsertProfile, logFailedLogin } from '@/lib/api';
+import { WILAYA_LATIN_NAMES, getShopTypeDisplayName, transliterateAlgerianName } from '@/lib/algeria_data';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
+import { useTheme } from '@/context/ThemeContext';
 import type { Wilaya, Commune, ShopType } from '@/types';
 import {
-  MapPin, Phone, KeyRound, ChevronDown, Loader2, Store, User, Mail, Lock, Eye, EyeOff, CheckCircle2, Check
+  MapPin, Phone, KeyRound, ChevronDown, Loader2, Store, User, Mail, Lock, Eye, EyeOff, CheckCircle2, Check, Globe, Sun, Moon
 } from 'lucide-react';
 import { GlassShell, DesignStyles } from '@/components/ui/DesignSystem';
 
@@ -16,7 +19,9 @@ function CustomSelect({
   disabled = false,
   icon: Icon,
   inputClasses,
-  searchPlaceholder = 'ابحث...'
+  searchPlaceholder,
+  noResultsText,
+  isRTL = true,
 }: {
   value: string;
   onChange: (val: string) => void;
@@ -25,7 +30,9 @@ function CustomSelect({
   disabled?: boolean;
   icon?: React.ElementType;
   inputClasses: string;
-  searchPlaceholder?: string;
+  searchPlaceholder: string;
+  noResultsText: string;
+  isRTL?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -36,7 +43,7 @@ function CustomSelect({
     : options;
 
   return (
-    <div className="relative">
+    <div className="relative" dir={isRTL ? 'rtl' : 'ltr'}>
       <button
         type="button"
         disabled={disabled}
@@ -44,46 +51,57 @@ function CustomSelect({
           setSearch('');
           setOpen(!open);
         }}
-        className={`${inputClasses} flex items-center justify-between text-right appearance-none !pr-8 pl-2 disabled:opacity-50 text-ellipsis overflow-hidden whitespace-nowrap`}
+        className={`${inputClasses} flex items-center justify-between ${
+          isRTL ? 'text-right !pr-9 !pl-7' : 'text-left !pl-9 !pr-7'
+        } appearance-none disabled:opacity-50 text-ellipsis overflow-hidden whitespace-nowrap`}
       >
-        <span className={selectedOption ? "text-white font-medium truncate" : "text-slate-400 font-normal truncate"}>
+        <span className={selectedOption ? "text-slate-900 dark:text-white font-medium truncate" : "text-slate-400 font-normal truncate"}>
           {selectedOption ? selectedOption.name : placeholder}
         </span>
-        {Icon && <Icon className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />}
-        <ChevronDown className={`absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none transition-transform ${open ? 'rotate-180' : ''}`} />
+        {Icon && (
+          <Icon className={`absolute ${isRTL ? 'right-2.5' : 'left-2.5'} top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none`} />
+        )}
+        <ChevronDown className={`absolute ${isRTL ? 'left-2.5' : 'right-2.5'} top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && !disabled && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute z-50 right-0 left-0 bottom-full mb-1 max-h-52 flex flex-col bg-[#18181b] border border-zinc-800/90 rounded-xl shadow-2xl p-1.5 text-right ring-1 ring-white/5">
+          <div
+            dir={isRTL ? 'rtl' : 'ltr'}
+            className={`absolute z-50 right-0 left-0 bottom-full mb-1 max-h-52 flex flex-col bg-white dark:bg-[#18181b] border border-slate-200 dark:border-zinc-800/90 rounded-xl shadow-xl dark:shadow-2xl p-1.5 ${
+              isRTL ? 'text-right' : 'text-left'
+            } ring-1 ring-slate-950/5 dark:ring-white/5`}
+          >
             {options.length > 5 && (
-              <div className="p-1 mb-1 border-b border-zinc-800">
+              <div className="p-1 mb-1 border-b border-slate-200 dark:border-zinc-800">
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={searchPlaceholder}
-                  className="w-full bg-zinc-900/90 text-white placeholder-zinc-500 text-xs rounded-lg px-2.5 py-1.5 outline-none border border-zinc-800 focus:border-emerald-500 text-right"
+                  className={`w-full bg-slate-100 dark:bg-zinc-900/90 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 text-xs rounded-lg px-2.5 py-1.5 outline-none border border-slate-200 dark:border-zinc-800 focus:border-emerald-500 ${
+                    isRTL ? 'text-right' : 'text-left'
+                  }`}
                   autoFocus
                 />
               </div>
             )}
             <div className="overflow-y-auto max-h-36 select-dropdown-scroll space-y-0.5">
               {filtered.length === 0 ? (
-                <div className="text-center py-2 text-xs text-zinc-500">لا توجد نتائج</div>
+                <div className="text-center py-2 text-xs text-slate-400 dark:text-zinc-500">{noResultsText}</div>
               ) : (
                 filtered.map((opt) => (
                   <button
                     key={opt.id}
                     type="button"
                     onClick={() => { onChange(opt.id); setOpen(false); }}
-                    className={`w-full text-right px-2.5 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-between gap-2 ${
-                      value === opt.id ? 'bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30' : 'text-zinc-300 hover:bg-zinc-800/80'
+                    className={`w-full ${isRTL ? 'text-right' : 'text-left'} px-2.5 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-between gap-2 ${
+                      value === opt.id ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/30' : 'text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800/80'
                     }`}
                   >
                     <span className="truncate">{opt.name}</span>
-                    {value === opt.id && <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
+                    {value === opt.id && <Check className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />}
                   </button>
                 ))
               )}
@@ -95,8 +113,10 @@ function CustomSelect({
   );
 }
 
-export default function LoginPage() {
+export default function LoginPage({ initialError }: { initialError?: string } = {}) {
   const { refreshProfile } = useAuth();
+  const { t, language, setLanguage, languages, isRTL, dir } = useLanguage();
+  const { isDark, toggleTheme } = useTheme();
   
   // App modes
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
@@ -120,7 +140,14 @@ export default function LoginPage() {
   
   // Status
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(initialError || '');
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (initialError) {
+      setError(initialError);
+    }
+  }, [initialError]);
 
   useEffect(() => {
     Promise.all([fetchWilayas(), fetchShopTypes()])
@@ -128,8 +155,8 @@ export default function LoginPage() {
         setWilayas(w);
         setShopTypes(st);
       })
-      .catch(() => setError('تعذر تحميل البيانات'));
-  }, []);
+      .catch(() => setError(t.common.error));
+  }, [t.common.error]);
 
   useEffect(() => {
     if (selectedWilaya) {
@@ -163,37 +190,39 @@ export default function LoginPage() {
   };
 
   /**
-   * ترجمة رسائل خطأ Supabase إلى العربية
+   * ترجمة رسائل خطأ Supabase بحسب لغة الواجهة الحالية
    */
   const translateSupabaseError = (message: string): string => {
     const msg = message.toLowerCase();
     if (msg.includes('for security purposes') || (msg.includes('after') && msg.includes('second'))) {
       const match = message.match(/(\d+)\s*second/);
-      const seconds = match ? match[1] : 'بضع';
+      const seconds = match ? match[1] : '30';
+      if (language === 'fr') return `Pour des raisons de sécurité, veuillez patienter ${seconds} secondes`;
+      if (language === 'en') return `For security reasons, please wait ${seconds} seconds before trying again`;
       return `لأسباب أمنية، يرجى الانتظار ${seconds} ثانية قبل المحاولة مجدداً`;
     }
     if (msg.includes('invalid login credentials') || msg.includes('invalid credentials')) {
-      return 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+      return t.auth.errorInvalidCredentials;
     }
     if (msg.includes('email already registered') || msg.includes('user already registered')) {
-      return 'هذا البريد الإلكتروني مسجّل مسبقاً، جرّب تسجيل الدخول';
+      return t.auth.errorEmailRegistered;
     }
     if (msg.includes('password should be at least')) {
-      return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
-    }
-    if (msg.includes('email not confirmed')) {
-      return 'يرجى تأكيد بريدك الإلكتروني أولاً';
+      return t.auth.errorPasswordLength;
     }
     if (msg.includes('too many requests') || msg.includes('rate limit')) {
-      return 'تجاوزت الحد المسموح به من الطلبات، يرجى الانتظار قليلاً';
+      return t.auth.errorTooManyRequests;
     }
     if (msg.includes('network') || msg.includes('fetch')) {
-      return 'تعذر الاتصال بالخادم، تحقق من اتصالك بالإنترنت';
+      return t.auth.errorNetwork;
     }
     return message;
   };
 
   const handleSignIn = async () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('just_registered');
+    }
     setLoading(true);
     setError('');
     try {
@@ -206,24 +235,35 @@ export default function LoginPage() {
       
       if (signInError) {
         logFailedLogin(cleanEmail, signInError.message, 'invalid_credentials', password);
-        setError(translateSupabaseError(signInError.message) || 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
+        setError(translateSupabaseError(signInError.message) || t.auth.errorInvalidCredentials);
         return;
       }
 
       if (data?.user) {
-        const { data: profile } = await supabase.from('profiles').select('status, role').eq('id', data.user.id).maybeSingle();
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('status, role, is_activated')
+          .eq('id', data.user.id)
+          .maybeSingle();
+
         if (profile && profile.status !== 'approved' && profile.role !== 'admin') {
-           logFailedLogin(cleanEmail, 'حساب غير معتمد حاول الدخول', 'blocked_unapproved');
-           await supabase.auth.signOut();
-           setError("عذراً، حسابك لا يزال قيد المراجعة ولم يتم تفعيله بعد.");
-           return;
+          logFailedLogin(cleanEmail, 'حساب غير معتمد حاول الدخول', 'blocked_unapproved');
+          await supabase.auth.signOut();
+          if (profile.status === 'rejected') {
+            setError(t.auth.errorRejectedByAdmin);
+          } else if (profile.is_activated) {
+            setError(t.auth.errorSuspendedByAdmin);
+          } else {
+            setError(t.auth.errorUnapprovedNew);
+          }
+          return;
         }
+
+        await refreshProfile();
       }
-      
-      await refreshProfile();
     } catch (err) {
       logFailedLogin(email.toLowerCase().trim(), err instanceof Error ? err.message : 'Unknown signin error', 'system_error', password);
-      setError('تعذر تسجيل الدخول، يرجى التأكد من صحة بياناتك');
+      setError(t.auth.errorGeneric);
     } finally {
       setLoading(false);
     }
@@ -251,11 +291,14 @@ export default function LoginPage() {
       });
       
       if (signUpError) {
-        setError(translateSupabaseError(signUpError.message) || 'تعذر إنشاء الحساب');
+        setError(translateSupabaseError(signUpError.message) || t.common.error);
         return;
       }
       
       if (data?.user) {
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('just_registered', 'true');
+        }
         await upsertProfile(
           data.user.id,
           cleanPhone(),
@@ -265,13 +308,15 @@ export default function LoginPage() {
           firstName.trim(),
           lastName.trim()
         );
-        // طرد المستخدم فوراً وعرض الرسالة
-        await supabase.auth.signOut();
-        setMode('signin');
-        setError("تم استلام طلب تسجيل بنجاح سيتواصل معك دعم بعد 24 او 48 ساعة شكرا");
+        if (data.session) {
+          await refreshProfile();
+        } else {
+          setMode('signin');
+          setError(t.auth.pendingDesc);
+        }
       }
     } catch {
-      setError('حدث خطأ أثناء إنشاء الحساب');
+      setError(t.auth.errorGeneric);
     } finally {
       setLoading(false);
     }
@@ -314,291 +359,373 @@ export default function LoginPage() {
     }
   };
 
+  const currentLangObj = languages.find((l) => l.code === language) || languages[0];
+
   return (
-    <GlassShell
-      title="Fox Way"
-      subtitle="المنصة الأذكى لتوزيع الجملة"
-      maxWidth={mode === 'signin' ? 'max-w-[340px] sm:max-w-[390px] md:max-w-[420px]' : 'max-w-[330px] sm:max-w-[380px] md:max-w-[410px]'}
-    >
-      <form onSubmit={(e) => e.preventDefault()} onKeyDown={handleKeyDown}>
-        {mode === 'signin' ? (
-        <>
-          <h2 className="text-2xl font-bold text-white mb-1.5 tracking-tight">تسجيل الدخول</h2>
-          <p className="text-sm text-zinc-400 mb-5">مرحباً بك مجدداً في متجر الجملة</p>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs sm:text-sm font-semibold text-zinc-300 mb-1">البريد الإلكتروني</label>
-              <div className="relative">
-                <Mail className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500 pointer-events-none" />
-                <input
-                  type="email"
-                  name="email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  className={`${inputClasses} !py-2.5 sm:!py-3 !px-3.5 sm:!px-4 !pr-10 text-xs sm:text-sm`}
-                  dir="ltr"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs sm:text-sm font-semibold text-zinc-300 mb-1">كلمة المرور</label>
-              <div className="relative">
-                <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500 pointer-events-none" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className={`${inputClasses} !py-2.5 sm:!py-3 !px-3.5 sm:!px-4 !pr-10 !pl-12 sm:!pl-14 text-xs sm:text-sm`}
-                  dir="ltr"
-                />
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-emerald-400 transition-colors p-1"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {error && (
-            <div className="mt-3.5 rounded-xl bg-red-500/10 border border-red-500/20 px-3.5 py-2.5 text-xs sm:text-sm text-red-400">
-              {error}
-            </div>
-          )}
-
+    <div dir={dir} className="w-full flex justify-center">
+      <GlassShell
+        title={t.nav.brandName}
+        subtitle={t.nav.brandSub}
+        maxWidth={mode === 'signin' ? 'max-w-[340px] sm:max-w-[390px] md:max-w-[420px]' : 'max-w-[330px] sm:max-w-[380px] md:max-w-[420px]'}
+      >
+        {/* Card Controls: Theme Toggle & Language Switcher */}
+        <div className="flex items-center justify-between mb-2.5">
           <button
-            onClick={handleSignIn}
-            disabled={!canSubmit() || loading}
-            className="w-full bg-gradient-to-r from-emerald-400 to-teal-500 text-zinc-950 font-extrabold rounded-xl px-4 py-3 sm:py-3.5 shadow-neon-sm hover:shadow-neon-emerald hover:brightness-110 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:-translate-y-0 mt-5 flex items-center justify-center gap-2 text-sm sm:text-base tracking-wide"
+            type="button"
+            onClick={toggleTheme}
+            className="inline-flex items-center justify-center p-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-zinc-900/80 hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-800 transition-all shadow-sm"
+            title={isDark ? t.nav.themeLight : t.nav.themeDark}
+            aria-label={isDark ? t.nav.themeLight : t.nav.themeDark}
           >
-            {loading ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : <KeyRound className="w-4.5 h-4.5" />}
-            تسجيل الدخول
+            {isDark ? (
+              <Sun className="w-3.5 h-3.5 text-amber-400" />
+            ) : (
+              <Moon className="w-3.5 h-3.5 text-indigo-600" />
+            )}
           </button>
 
-          <p className="text-center text-xs sm:text-sm text-zinc-400 mt-5">
-            ليس لديك حساب بعد؟{' '}
+          <div className="relative">
             <button
-              onClick={() => switchMode('signup')}
-              className="font-bold text-emerald-400 hover:text-emerald-300 transition-colors"
+              type="button"
+              onClick={() => setLangMenuOpen(!langMenuOpen)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-zinc-900/80 hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-800 transition-all shadow-sm"
             >
-              إنشاء حساب
+              <Globe className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />
+              <span>{currentLangObj.flag}</span>
+              <span>{currentLangObj.label}</span>
+              <ChevronDown className="w-3 h-3 text-slate-400 dark:text-zinc-400" />
             </button>
-          </p>
-        </>
-      ) : (
-        <>
-          <h2 className="text-xl sm:text-2xl font-bold text-white mb-1 tracking-tight">إنشاء حساب جديد</h2>
-          <p className="text-xs sm:text-sm text-zinc-400 mb-4">انضم إلى شبكة توزيع Fox Way</p>
 
-          <div className="space-y-2.5">
-            {/* Row 1: Name & Surname */}
-            <div className="grid grid-cols-2 gap-2.5">
-              <div>
-                <label className={labelClasses}>الاسم</label>
-                <div className="relative">
-                  <User className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                  <input
-                    type="text"
-                    name="firstName"
-                    autoComplete="given-name"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="الاسم"
-                    className={`${inputClasses} !pr-8`}
-                  />
+            {langMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setLangMenuOpen(false)} />
+                <div className="absolute top-full end-0 mt-1 z-50 min-w-[130px] bg-white dark:bg-[#18181b] border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl dark:shadow-2xl p-1 space-y-0.5 ring-1 ring-slate-950/5 dark:ring-white/10">
+                  {languages.map((l) => (
+                    <button
+                      key={l.code}
+                      type="button"
+                      onClick={() => {
+                        setLanguage(l.code);
+                        setLangMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors ${
+                        l.code === language
+                          ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/30'
+                          : 'text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800/80'
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <span>{l.flag}</span>
+                        <span>{l.label}</span>
+                      </span>
+                      {l.code === language && <Check className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />}
+                    </button>
+                  ))}
                 </div>
-              </div>
-              <div>
-                <label className={labelClasses}>اللقب</label>
-                <input
-                  type="text"
-                  name="lastName"
-                  autoComplete="family-name"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  placeholder="اللقب"
-                  className={inputClasses}
-                />
-              </div>
-            </div>
+              </>
+            )}
+          </div>
+        </div>
 
-            {/* Row 2: Email & Phone */}
-            <div className="grid grid-cols-2 gap-2.5">
+        <form onSubmit={(e) => e.preventDefault()} onKeyDown={handleKeyDown}>
+          {mode === 'signin' ? (
+          <>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1.5 tracking-tight">{t.auth.loginTitle}</h2>
+            <p className="text-sm text-slate-500 dark:text-zinc-400 mb-5">{t.auth.loginSubtitle}</p>
+
+            <div className="space-y-4">
               <div>
-                <label className={labelClasses}>البريد الإلكتروني</label>
+                <label className="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-zinc-300 mb-1">{t.auth.email}</label>
                 <div className="relative">
-                  <Mail className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <Mail className={`absolute ${isRTL ? 'right-3.5' : 'left-3.5'} top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 dark:text-zinc-500 pointer-events-none`} />
                   <input
                     type="email"
-                    name="signup-email"
+                    name="email"
                     autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@example.com"
-                    className={`${inputClasses} !pr-8`}
+                    placeholder={t.auth.emailPlaceholder}
+                    className={`${inputClasses} !py-2.5 sm:!py-3 ${isRTL ? '!pr-11 !pl-4 text-right' : '!pl-11 !pr-4 text-left'} text-xs sm:text-sm`}
                     dir="ltr"
                   />
                 </div>
               </div>
-              <div>
-                <label className={labelClasses}>رقم الهاتف</label>
-                <div className="relative">
-                  <Phone className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                  <input
-                    type="tel"
-                    name="phone"
-                    autoComplete="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, '').slice(0, 10))}
-                    placeholder="0612345678"
-                    className={`${inputClasses} !pr-8`}
-                    dir="ltr"
-                    style={{ textAlign: 'right' }}
-                  />
-                </div>
-              </div>
-            </div>
 
-            {/* Row 3: Password & Confirm Password */}
-            <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className={labelClasses}>كلمة المرور</label>
+                <label className="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-zinc-300 mb-1">{t.auth.password}</label>
                 <div className="relative">
-                  <Lock className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <Lock className={`absolute ${isRTL ? 'right-3.5' : 'left-3.5'} top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 dark:text-zinc-500 pointer-events-none`} />
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    name="signup-password"
-                    autoComplete="new-password"
+                    name="password"
+                    autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className={`${inputClasses} !pr-8 !pl-8`}
+                    placeholder={t.auth.passwordPlaceholder}
+                    className={`${inputClasses} !py-2.5 sm:!py-3 ${isRTL ? '!pr-11 !pl-11 text-right' : '!pl-11 !pr-11 text-left'} text-xs sm:text-sm`}
                     dir="ltr"
                   />
                   <button
                     type="button"
                     tabIndex={-1}
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-400 transition-colors"
+                    className={`absolute ${isRTL ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500 hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors p-1`}
+                    title={showPassword ? t.auth.hidePassword : t.auth.showPassword}
                   >
-                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className={labelClasses}>تأكيد كلمة المرور</label>
-                <div className="relative">
-                  {password !== '' && password === confirmPassword ? (
-                    <CheckCircle2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400 animate-scale-in" />
-                  ) : (
-                    <Lock className={`absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 ${confirmPassword !== '' && password !== confirmPassword ? 'text-red-400' : 'text-slate-400'} pointer-events-none transition-colors`} />
-                  )}
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className={`${inputClasses} !pr-8 !pl-8 transition-all duration-300 ${
-                      password !== '' && password === confirmPassword 
-                        ? '!border-emerald-500/60 focus:!border-emerald-500 focus:!ring-2 focus:!ring-emerald-500/30 bg-emerald-500/10' 
-                        : confirmPassword !== '' && password !== confirmPassword 
-                        ? '!border-red-500/60 focus:!border-red-500 focus:!ring-2 focus:!ring-red-500/30 bg-red-500/10' 
-                        : ''
-                    }`}
-                    dir="ltr"
-                  />
-                  <button
-                    type="button"
-                    tabIndex={-1}
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-400 transition-colors"
-                  >
-                    {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Row 4: Wilaya & Commune */}
-            <div className="grid grid-cols-2 gap-2.5">
-              <div>
-                <label className={labelClasses}>الولاية</label>
-                <CustomSelect
-                  value={selectedWilaya}
-                  onChange={setSelectedWilaya}
-                  options={wilayas.map((w) => ({ id: w.code, name: `${w.code} - ${w.name}` }))}
-                  placeholder="اختر الولاية"
-                  icon={MapPin}
-                  inputClasses={inputClasses}
-                />
+            {error && (
+              <div className="mt-3.5 rounded-xl bg-red-500/10 border border-red-500/20 px-3.5 py-2.5 text-xs sm:text-sm text-red-500 dark:text-red-400">
+                {error}
               </div>
-              <div>
-                <label className={labelClasses}>البلدية</label>
-                <CustomSelect
-                  value={selectedCommune}
-                  onChange={setSelectedCommune}
-                  options={communes.map((c) => ({ id: String(c.id), name: c.name }))}
-                  placeholder="اختر البلدية"
-                  disabled={!selectedWilaya}
-                  icon={MapPin}
-                  inputClasses={inputClasses}
-                />
-              </div>
-            </div>
+            )}
 
-            {/* Row 5: Shop Type */}
-            <div>
-              <label className={labelClasses}>نوع النشاط (المحل)</label>
-              <CustomSelect
-                value={selectedShopType}
-                onChange={setSelectedShopType}
-                options={shopTypes.map((st) => ({ id: String(st.id), name: st.name }))}
-                placeholder="اختر نشاطك التجاري"
-                icon={Store}
-                inputClasses={inputClasses}
-              />
-            </div>
-          </div>
-
-          {error && (
-            <div className="mt-3 rounded-xl bg-red-500/10 border border-red-500/20 px-3 py-2 text-xs text-red-400">
-              {error}
-            </div>
-          )}
-
-          <button
-            onClick={handleSignUp}
-            disabled={!canSubmit() || loading}
-            className="w-full bg-gradient-to-r from-emerald-400 to-teal-500 text-zinc-950 font-extrabold rounded-xl px-4 py-2.5 shadow-neon-sm hover:shadow-neon-emerald hover:brightness-110 hover:-translate-y-0.5 transition-all disabled:opacity-50 mt-4 flex items-center justify-center gap-2 text-xs sm:text-sm tracking-wide"
-          >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
-            إنشاء حساب
-          </button>
-
-          <p className="text-center text-xs text-zinc-400 mt-4">
-            لديك حساب بالفعل؟{' '}
             <button
-              onClick={() => switchMode('signin')}
-              className="font-bold text-emerald-400 hover:text-emerald-300 transition-colors"
+              onClick={handleSignIn}
+              disabled={!canSubmit() || loading}
+              className="w-full bg-gradient-to-r from-emerald-400 to-teal-500 text-zinc-950 font-extrabold rounded-xl px-4 py-3 sm:py-3.5 shadow-neon-sm hover:shadow-neon-emerald hover:brightness-110 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:-translate-y-0 mt-5 flex items-center justify-center gap-2 text-sm sm:text-base tracking-wide"
             >
-              تسجيل الدخول
+              {loading ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : <KeyRound className="w-4.5 h-4.5" />}
+              {t.auth.signInBtn}
             </button>
-          </p>
-        </>
-      )}
-      </form>
-    </GlassShell>
+
+            <p className="text-center text-xs sm:text-sm text-slate-500 dark:text-zinc-400 mt-5">
+              {t.auth.noAccountPrompt}{' '}
+              <button
+                onClick={() => switchMode('signup')}
+                className="font-bold text-emerald-500 dark:text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors"
+              >
+                {t.auth.createAccountLink}
+              </button>
+            </p>
+          </>
+        ) : (
+          <>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-1 tracking-tight">{t.auth.createAccountTitle}</h2>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 mb-4">{t.auth.createAccountSubtitle}</p>
+
+            <div className="space-y-2.5">
+              {/* Row 1: Name & Surname */}
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className={labelClasses}>{t.auth.firstName}</label>
+                  <div className="relative">
+                    <User className={`absolute ${isRTL ? 'right-2.5' : 'left-2.5'} top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none`} />
+                    <input
+                      type="text"
+                      name="firstName"
+                      autoComplete="given-name"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder={t.auth.firstName}
+                      className={`${inputClasses} ${isRTL ? '!pr-9 !pl-3 text-right' : '!pl-9 !pr-3 text-left'}`}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className={labelClasses}>{t.auth.lastName}</label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    autoComplete="family-name"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder={t.auth.lastName}
+                    className={`${inputClasses} ${isRTL ? 'text-right' : 'text-left'}`}
+                  />
+                </div>
+              </div>
+
+              {/* Row 2: Email & Phone */}
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className={labelClasses}>{t.auth.email}</label>
+                  <div className="relative">
+                    <Mail className={`absolute ${isRTL ? 'right-2.5' : 'left-2.5'} top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none`} />
+                    <input
+                      type="email"
+                      name="signup-email"
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder={t.auth.emailPlaceholder}
+                      className={`${inputClasses} ${isRTL ? '!pr-9 !pl-3 text-right' : '!pl-9 !pr-3 text-left'}`}
+                      dir="ltr"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className={labelClasses}>{t.auth.phone}</label>
+                  <div className="relative">
+                    <Phone className={`absolute ${isRTL ? 'right-2.5' : 'left-2.5'} top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none`} />
+                    <input
+                      type="tel"
+                      name="phone"
+                      autoComplete="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, '').slice(0, 10))}
+                      placeholder={t.auth.phonePlaceholder}
+                      className={`${inputClasses} ${isRTL ? '!pr-9 !pl-3 text-right' : '!pl-9 !pr-3 text-left'}`}
+                      dir="ltr"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 3: Password & Confirm Password */}
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className={labelClasses}>{t.auth.password}</label>
+                  <div className="relative">
+                    <Lock className={`absolute ${isRTL ? 'right-2.5' : 'left-2.5'} top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none`} />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      name="signup-password"
+                      autoComplete="new-password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder={t.auth.passwordPlaceholder}
+                      className={`${inputClasses} ${isRTL ? '!pr-9 !pl-9 text-right' : '!pl-9 !pr-9 text-left'}`}
+                      dir="ltr"
+                    />
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      onClick={() => setShowPassword(!showPassword)}
+                      className={`absolute ${isRTL ? 'left-2.5' : 'right-2.5'} top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-400 transition-colors`}
+                    >
+                      {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className={labelClasses}>{t.auth.confirmPassword}</label>
+                  <div className="relative">
+                    {password !== '' && password === confirmPassword ? (
+                      <CheckCircle2 className={`absolute ${isRTL ? 'right-2.5' : 'left-2.5'} top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400 animate-scale-in`} />
+                    ) : (
+                      <Lock className={`absolute ${isRTL ? 'right-2.5' : 'left-2.5'} top-1/2 -translate-y-1/2 w-4 h-4 ${confirmPassword !== '' && password !== confirmPassword ? 'text-red-400' : 'text-slate-400'} pointer-events-none transition-colors`} />
+                    )}
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder={t.auth.confirmPasswordPlaceholder}
+                      className={`${inputClasses} ${isRTL ? '!pr-9 !pl-9 text-right' : '!pl-9 !pr-9 text-left'} transition-all duration-300 ${
+                        password !== '' && password === confirmPassword 
+                          ? '!border-emerald-500/60 focus:!border-emerald-500 focus:!ring-2 focus:!ring-emerald-500/30 bg-emerald-500/10' 
+                          : confirmPassword !== '' && password !== confirmPassword 
+                          ? '!border-red-500/60 focus:!border-red-500 focus:!ring-2 focus:!ring-red-500/30 bg-red-500/10' 
+                          : ''
+                      }`}
+                      dir="ltr"
+                    />
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className={`absolute ${isRTL ? 'left-2.5' : 'right-2.5'} top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-400 transition-colors`}
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 4: Wilaya & Commune */}
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className={labelClasses}>{t.auth.wilaya}</label>
+                  <CustomSelect
+                    value={selectedWilaya}
+                    onChange={setSelectedWilaya}
+                    options={wilayas.map((w) => {
+                      const codePadded = w.code.padStart(2, '0');
+                      const latin = WILAYA_LATIN_NAMES[codePadded] || w.name;
+                      const displayName = language !== 'ar' ? `${codePadded} - ${latin}` : `${codePadded} - ${w.name}`;
+                      return { id: w.code, name: displayName };
+                    })}
+                    placeholder={t.auth.selectWilaya}
+                    icon={MapPin}
+                    inputClasses={inputClasses}
+                    searchPlaceholder={t.auth.searchPlaceholder}
+                    noResultsText={t.auth.noResults}
+                    isRTL={isRTL}
+                  />
+                </div>
+                <div>
+                  <label className={labelClasses}>{t.auth.commune}</label>
+                  <CustomSelect
+                    value={selectedCommune}
+                    onChange={setSelectedCommune}
+                    options={communes.map((c) => ({
+                      id: String(c.id),
+                      name: language !== 'ar' ? transliterateAlgerianName(c.name) : c.name
+                    }))}
+                    placeholder={t.auth.selectCommune}
+                    disabled={!selectedWilaya}
+                    icon={MapPin}
+                    inputClasses={inputClasses}
+                    searchPlaceholder={t.auth.searchPlaceholder}
+                    noResultsText={t.auth.noResults}
+                    isRTL={isRTL}
+                  />
+                </div>
+              </div>
+
+              {/* Row 5: Shop Type */}
+              <div>
+                <label className={labelClasses}>{t.auth.shopType}</label>
+                <CustomSelect
+                  value={selectedShopType}
+                  onChange={setSelectedShopType}
+                  options={shopTypes.map((st) => ({
+                    id: String(st.id),
+                    name: getShopTypeDisplayName(st, language)
+                  }))}
+                  placeholder={t.auth.selectShopType}
+                  icon={Store}
+                  inputClasses={inputClasses}
+                  searchPlaceholder={t.auth.searchPlaceholder}
+                  noResultsText={t.auth.noResults}
+                  isRTL={isRTL}
+                />
+              </div>
+            </div>
+
+            {error && (
+              <div className="mt-3 rounded-xl bg-red-500/10 border border-red-500/20 px-3 py-2 text-xs text-red-400">
+                {error}
+              </div>
+            )}
+
+            <button
+              onClick={handleSignUp}
+              disabled={!canSubmit() || loading}
+              className="w-full bg-gradient-to-r from-emerald-400 to-teal-500 text-zinc-950 font-extrabold rounded-xl px-4 py-2.5 shadow-neon-sm hover:shadow-neon-emerald hover:brightness-110 hover:-translate-y-0.5 transition-all disabled:opacity-50 mt-4 flex items-center justify-center gap-2 text-xs sm:text-sm tracking-wide"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
+              {t.auth.signUpBtn}
+            </button>
+
+            <p className="text-center text-xs text-slate-500 dark:text-zinc-400 mt-4">
+              {t.auth.haveAccountPrompt}{' '}
+              <button
+                onClick={() => switchMode('signin')}
+                className="font-bold text-emerald-500 dark:text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors"
+              >
+                {t.auth.signInLink}
+              </button>
+            </p>
+          </>
+        )}
+        </form>
+      </GlassShell>
+    </div>
   );
 }
-

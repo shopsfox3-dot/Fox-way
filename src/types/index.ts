@@ -44,6 +44,7 @@ export interface ShopType {
 
 export interface Profile {
   id: string;
+  email?: string;
   phone: string;
   wilaya_code: string;
   commune_id: number;
@@ -53,6 +54,7 @@ export interface Profile {
   full_name: string | null;
   status: 'pending' | 'active' | 'rejected' | 'approved';
   role: 'client' | 'admin' | 'merchant';
+  is_activated?: boolean;
   created_at: string;
 }
 
