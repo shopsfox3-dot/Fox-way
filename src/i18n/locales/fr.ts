@@ -107,7 +107,7 @@ export const fr: TranslationSchema = {
     featureDelivery: 'Livraison sur toutes les wilayas',
     featureQuality: 'Produits d\'origine garantis',
     featureWholesale: 'Prix de gros direct fournisseur',
-    searchPlaceholder: 'Rechercher un produit ou rayon (ex: Huile, Sucre, Détergents, Café...)',
+    searchPlaceholder: 'Rechercher un produit ou rayon (ex: Shampoing, Crème, Savon, Déodorant, Bazar...)',
     matchingCategories: 'Rayons correspondants',
     searchResultsFor: 'Résultats de recherche pour',
     productsCount: 'produits',
@@ -182,12 +182,14 @@ export const fr: TranslationSchema = {
       rejected: 'Rejetés',
       all: 'Tous',
       products: 'Disponibilité marché',
+      categories: 'Rayons & Catégories',
       abandonedCarts: 'Paniers en attente',
       securityLogs: 'Journal de sécurité',
     },
     searchPlaceholders: {
       accounts: 'Rechercher par nom, téléphone, wilaya...',
       products: 'Rechercher un article...',
+      categories: 'Rechercher un rayon...',
       securityLogs: 'Rechercher dans les connexions...',
     },
     accountActions: {

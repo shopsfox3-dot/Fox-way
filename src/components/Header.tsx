@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, Truck, LogOut, MapPin, ShieldCheck, Globe, Check, Sun, Moon } from 'lucide-react';
+import { ShoppingCart, LogOut, MapPin, ShieldCheck, Globe, Check, Sun, Moon } from 'lucide-react';
+import FoxLogo from '@/components/FoxLogo';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -64,14 +65,9 @@ export default function Header({ onNavigate, currentPage }: HeaderProps) {
         {/* Logo */}
         <button
           onClick={() => onNavigate('home')}
-          className="flex items-center gap-2.5 shrink-0 group"
+          className="flex items-center gap-2 shrink-0 group text-start focus:outline-none"
         >
-          <div className="w-10 h-10 bg-gradient-to-tr from-emerald-400 to-teal-500 rounded-xl flex items-center justify-center shadow-neon-sm ring-1 ring-white/10 group-hover:brightness-110 transition-all">
-            <Truck className="w-5 h-5 text-zinc-950 font-black" />
-          </div>
-          <span className="font-extrabold text-slate-900 dark:text-white text-base tracking-tight hidden sm:block">
-            Fox <span className="text-emerald-500 dark:text-emerald-400">Way</span>
-          </span>
+          <FoxLogo size="sm" />
         </button>
 
         {/* Location */}

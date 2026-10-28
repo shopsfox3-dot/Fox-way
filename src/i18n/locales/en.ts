@@ -107,7 +107,7 @@ export const en: TranslationSchema = {
     featureDelivery: 'Delivery across all 58 Wilayas',
     featureQuality: '100% Genuine guaranteed products',
     featureWholesale: 'Direct supplier wholesale prices',
-    searchPlaceholder: 'Search for any product or category (e.g., Oil, Sugar, Detergent, Coffee...)',
+    searchPlaceholder: 'Search for any product or category (e.g., Shampoo, Creams, Soap, Deodorant, Bazaar...)',
     matchingCategories: 'Matching Categories',
     searchResultsFor: 'Search results for',
     productsCount: 'products',
@@ -182,12 +182,14 @@ export const en: TranslationSchema = {
       rejected: 'Rejected',
       all: 'All',
       products: 'Market Availability',
+      categories: 'Categories & Departments',
       abandonedCarts: 'Unsubmitted Carts',
       securityLogs: 'Security Log',
     },
     searchPlaceholders: {
       accounts: 'Search by name, phone, province...',
       products: 'Search products...',
+      categories: 'Search categories...',
       securityLogs: 'Search login logs...',
     },
     accountActions: {

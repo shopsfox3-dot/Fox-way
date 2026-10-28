@@ -49,13 +49,15 @@ import {
   Mail,
   Sun,
   Moon,
+  Layers,
 } from 'lucide-react';
+import CategoryManager from '@/components/admin/CategoryManager';
 
 interface AdminAccountsPageProps {
   onBack: () => void;
 }
 
-type TabType = 'pending' | 'approved' | 'rejected' | 'all' | 'products' | 'abandoned_carts' | 'security_logs';
+type TabType = 'pending' | 'approved' | 'rejected' | 'all' | 'categories' | 'products' | 'abandoned_carts' | 'security_logs';
 
 export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
   const { profile: currentAdmin } = useAuth();
@@ -648,6 +650,25 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
             </button>
 
             <button
+              onClick={() => setActiveTab('categories')}
+              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
+                activeTab === 'categories'
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-extrabold shadow-sm'
+                  : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-zinc-800'
+              }`}
+            >
+              <Layers className="w-4 h-4" />
+              <span>{t.admin.tabs.categories}</span>
+              <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${
+                activeTab === 'categories'
+                  ? 'bg-white/30 text-white font-black'
+                  : 'bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800'
+              }`}>
+                {categories.length}
+              </span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('products')}
               className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
                 activeTab === 'products'
@@ -717,6 +738,8 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
               placeholder={
                 activeTab === 'products'
                   ? t.admin.searchPlaceholders.products
+                  : activeTab === 'categories'
+                  ? t.admin.searchPlaceholders.categories
                   : activeTab === 'security_logs'
                   ? t.admin.searchPlaceholders.securityLogs
                   : t.admin.searchPlaceholders.accounts
@@ -735,6 +758,19 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
           <Loader2 className="w-8 h-8 text-emerald-600 dark:text-emerald-400 animate-spin mb-3" />
           <p className="text-sm text-slate-500 dark:text-zinc-400">{t.admin.accountsTab.loadingAccounts}</p>
         </div>
+      ) : activeTab === 'categories' ? (
+        <CategoryManager
+          categories={categories.filter((c) =>
+            searchTerm.trim()
+              ? c.name.toLowerCase().includes(searchTerm.toLowerCase().trim()) ||
+                (c.name_fr && c.name_fr.toLowerCase().includes(searchTerm.toLowerCase().trim()))
+              : true
+          )}
+          products={products}
+          onRefresh={loadData}
+          isRTL={isRTL}
+          language={language}
+        />
       ) : activeTab === 'security_logs' ? (
 
         /* Security logs tab */

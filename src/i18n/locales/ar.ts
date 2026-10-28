@@ -107,7 +107,7 @@ export const ar: TranslationSchema = {
     featureDelivery: 'توصيل لكل الولايات',
     featureQuality: 'سلع أصلية ومضمونة',
     featureWholesale: 'سعر الجملة المباشر',
-    searchPlaceholder: 'ابحث عن أي منتج أو قسم (مثال: زيت، سكر، منظفات، قهوة...)',
+    searchPlaceholder: 'ابحث عن أي منتج أو قسم (مثال: شامبوان، صابون، مرطب، مزيل عرق، خردوات...)',
     matchingCategories: 'الأقسام المطابقة',
     searchResultsFor: 'نتائج البحث عن',
     productsCount: 'منتج',
@@ -182,12 +182,14 @@ export const ar: TranslationSchema = {
       rejected: 'المرفوضة',
       all: 'الكل',
       products: 'توفر المنتجات بالسوق',
+      categories: 'الأقسام والفئات',
       abandonedCarts: 'سلات لم تُرسل (متروكة)',
       securityLogs: 'سجل الأمان',
     },
     searchPlaceholders: {
       accounts: 'بحث بالاسم، الهاتف، الولاية...',
       products: 'بحث في المنتجات...',
+      categories: 'بحث في الأقسام والفئات...',
       securityLogs: 'بحث في سجل الدخول...',
     },
     accountActions: {

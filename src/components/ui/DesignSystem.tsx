@@ -1,5 +1,5 @@
 import React from 'react';
-import { Store } from 'lucide-react';
+import FoxLogo from '@/components/FoxLogo';
 import { useLanguage } from '@/context/LanguageContext';
 
 export const GlassShell = ({
@@ -27,8 +27,8 @@ export const GlassShell = ({
       <div className={`relative w-full ${maxWidth} z-10 my-auto transition-all duration-300`}>
         {title && (
           <div className="text-center mb-3 sm:mb-4 animate-fade-in-up">
-            <div className="inline-flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 bg-gradient-to-tr from-emerald-400 to-teal-500 rounded-2xl mb-2 shadow-neon-sm ring-1 ring-white/20">
-              <Store className="w-5 h-5 sm:w-6 sm:h-6 text-zinc-950 font-bold" />
+            <div className="inline-flex items-center justify-center mb-2">
+              <FoxLogo size="lg" iconOnly />
             </div>
             <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">{title}</h1>
             {subtitle && <p className="text-slate-500 dark:text-zinc-400 text-[11px] sm:text-xs mt-0.5 font-medium">{subtitle}</p>}

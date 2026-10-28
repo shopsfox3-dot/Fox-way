@@ -14,8 +14,10 @@ export interface Commune {
 export interface Category {
   id: string;
   name: string;
+  name_fr?: string | null;
   icon: string | null;
   sort_order: number;
+  brand_images?: string[];
 }
 
 export interface Product {

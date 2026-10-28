@@ -1,0 +1,76 @@
+<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Vibrant Emerald & Mint Gradients for High Visibility -->
+    <linearGradient id="favEmeraldCenter" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stopColor="#6ee7b7" />
+      <stop offset="50%" stopColor="#10b981" />
+      <stop offset="100%" stopColor="#059669" />
+    </linearGradient>
+
+    <linearGradient id="favEmeraldSide" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#34d399" />
+      <stop offset="100%" stopColor="#047857" />
+    </linearGradient>
+
+    <linearGradient id="favEmeraldOuter" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#10b981" />
+      <stop offset="100%" stopColor="#065f46" />
+    </linearGradient>
+  </defs>
+
+  <!-- Transparent Background - Pure Filled Radiant Lotus Flower -->
+
+  <!-- Outer Base Petals (Darker Emerald Layer) -->
+  <path
+    d="M32 46 C20 44, 4 38, 5 32 C14 33, 23 40, 32 46 Z"
+    fill="url(#favEmeraldOuter)"
+    opacity="0.9"
+  />
+  <path
+    d="M32 46 C44 44, 60 38, 59 32 C50 33, 41 40, 32 46 Z"
+    fill="url(#favEmeraldOuter)"
+    opacity="0.9"
+  />
+
+  <!-- Lower Flaring Petals -->
+  <path
+    d="M32 45 C18 39, 4 31, 7 24 C16 26, 24 35, 32 45 Z"
+    fill="url(#favEmeraldSide)"
+  />
+  <path
+    d="M32 45 C46 39, 60 31, 57 24 C48 26, 40 35, 32 45 Z"
+    fill="url(#favEmeraldSide)"
+  />
+
+  <!-- Middle Side Petals -->
+  <path
+    d="M32 44 C22 34, 10 23, 14 16 C22 22, 26 31, 32 44 Z"
+    fill="url(#favEmeraldSide)"
+  />
+  <path
+    d="M32 44 C42 34, 54 23, 50 16 C42 22, 38 31, 32 44 Z"
+    fill="url(#favEmeraldSide)"
+  />
+
+  <!-- Inner Side Petals -->
+  <path
+    d="M32 43 C26 31, 16 20, 23 12 C29 19, 30 28, 32 43 Z"
+    fill="url(#favEmeraldCenter)"
+  />
+  <path
+    d="M32 43 C38 31, 48 20, 41 12 C35 19, 34 28, 32 43 Z"
+    fill="url(#favEmeraldCenter)"
+  />
+
+  <!-- Center Top Dominant Petal (Brightest Mint/Emerald) -->
+  <path
+    d="M32 5 C30 16, 25 28, 32 44 C39 28, 34 16, 32 5 Z"
+    fill="url(#favEmeraldCenter)"
+    stroke="#a7f3d0"
+    stroke-width="0.8"
+  />
+
+  <!-- Lotus Core Seed / Base Jewel -->
+  <ellipse cx="32" cy="48" rx="4" ry="2.5" fill="#a7f3d0" />
+  <circle cx="32" cy="53" r="2" fill="#34d399" />
+</svg>

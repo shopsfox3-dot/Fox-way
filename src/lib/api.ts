@@ -87,6 +87,128 @@ export async function fetchCategories(): Promise<Category[]> {
   }
 }
 
+export async function createCategory(cat: {
+  name: string;
+  name_fr?: string | null;
+  icon?: string | null;
+  sort_order?: number;
+  brand_images?: string[];
+}): Promise<{ data: Category | null; error: string | null }> {
+  try {
+    const { data, error } = await supabase
+      .from('categories')
+      .insert({
+        name: cat.name.trim(),
+        name_fr: cat.name_fr ? cat.name_fr.trim() : null,
+        icon: cat.icon || 'Sparkles',
+        sort_order: cat.sort_order ?? 0,
+        brand_images: cat.brand_images || [],
+      })
+      .select()
+      .single();
+
+    if (error) return { data: null, error: error.message };
+    return { data: data as Category, error: null };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'حدث خطأ أثناء إضافة القسم';
+    return { data: null, error: message };
+  }
+}
+
+export async function updateCategory(
+  id: string,
+  updates: Partial<{
+    name: string;
+    name_fr: string | null;
+    icon: string | null;
+    sort_order: number;
+    brand_images: string[];
+  }>
+): Promise<{ success: boolean; error: string | null }> {
+  try {
+    const { error } = await supabase
+      .from('categories')
+      .update(updates)
+      .eq('id', id);
+
+    if (error) return { success: false, error: error.message };
+    return { success: true, error: null };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'حدث خطأ أثناء تعديل القسم';
+    return { success: false, error: message };
+  }
+}
+
+export async function deleteCategory(
+  id: string
+): Promise<{ success: boolean; error: string | null }> {
+  try {
+    // Check if products are linked
+    const { count, error: countErr } = await supabase
+      .from('products')
+      .select('id', { count: 'exact', head: true })
+      .eq('category_id', id);
+
+    if (!countErr && (count ?? 0) > 0) {
+      return {
+        success: false,
+        error: `لا يمكن حذف هذا القسم لأنه يحتوي على ${count} منتج(ات). يرجى نقل أو حذف المنتجات أولاً.`,
+      };
+    }
+
+    const { error } = await supabase
+      .from('categories')
+      .delete()
+      .eq('id', id);
+
+    if (error) return { success: false, error: error.message };
+    return { success: true, error: null };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'حدث خطأ أثناء حذف القسم' };
+  }
+}
+
+/**
+ * Upload brand logo or banner image directly to Supabase Storage
+ */
+export async function uploadBrandImage(
+  file: File
+): Promise<{ url: string | null; error: string | null }> {
+  try {
+    if (!file.type.startsWith('image/')) {
+      return { url: null, error: 'الملف المختار ليس صورة صالحة' };
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      return { url: null, error: 'حجم الصورة كبير جداً (الحد الأقصى 5 ميغابايت)' };
+    }
+
+    const fileExt = file.name.split('.').pop() || 'png';
+    const fileName = `brand_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+    const filePath = `brands/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('product-images')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    if (uploadError) {
+      return { url: null, error: uploadError.message };
+    }
+
+    const { data } = supabase.storage
+      .from('product-images')
+      .getPublicUrl(filePath);
+
+    return { url: data.publicUrl, error: null };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'فشل رفع الصورة';
+    return { url: null, error: message };
+  }
+}
+
+
 export async function fetchAllProducts(): Promise<Product[]> {
   try {
     const { data, error } = await supabase

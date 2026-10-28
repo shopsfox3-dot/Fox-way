@@ -182,12 +182,14 @@ export interface TranslationSchema {
       rejected: string;
       all: string;
       products: string;
+      categories: string;
       abandonedCarts: string;
       securityLogs: string;
     };
     searchPlaceholders: {
       accounts: string;
       products: string;
+      categories: string;
       securityLogs: string;
     };
     accountActions: {

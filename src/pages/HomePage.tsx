@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { fetchCategories, fetchProductCountByCategory, searchAllProducts } from '@/lib/api';
 import { getCategoryIcon } from '@/components/CategoryIcon';
+import { CategoryBrandBillboard } from '@/components/CategoryBrandBillboard';
 import { useCart } from '@/context/CartContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { formatDA } from '@/lib/format';
@@ -336,28 +337,43 @@ export default function HomePage({ onSelectCategory }: HomePageProps) {
               <Loader2 className="w-8 h-8 text-emerald-500 dark:text-emerald-400 animate-spin" />
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
               {categories.map((cat, index) => {
-                const Icon = getCategoryIcon(cat.icon);
                 const count = counts[cat.id] || 0;
+                const localizedName = language === 'fr' ? (cat.name_fr || cat.name) : cat.name;
                 return (
                   <button
                     key={cat.id}
-                    onClick={() => onSelectCategory(cat.id, cat.name)}
-                    className={`card p-5 ${isRTL ? 'text-right' : 'text-left'} group hover:border-emerald-500/50 hover:shadow-md dark:hover:shadow-neon-sm bg-white dark:bg-[#121215] border border-slate-200/90 dark:border-zinc-800/80 transition-all duration-300 animate-fade-in-up ring-1 ring-slate-950/5 dark:ring-white/5`}
+                    onClick={() => onSelectCategory(cat.id, localizedName)}
+                    className={`card p-4 sm:p-5 rounded-2xl ${isRTL ? 'text-right' : 'text-left'} group hover:border-emerald-500/60 hover:shadow-xl dark:hover:shadow-neon-sm bg-white dark:bg-[#121215] border border-slate-200/90 dark:border-zinc-800/80 transition-all duration-300 animate-fade-in-up ring-1 ring-slate-950/5 dark:ring-white/5 flex flex-col justify-between`}
                     style={{ animationDelay: `${index * 60}ms`, opacity: 0 }}
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 group-hover:border-emerald-500/40 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-500/10 flex items-center justify-center transition-all duration-300">
-                        <Icon className="w-7 h-7 text-emerald-500 dark:text-emerald-400" />
+                    <div>
+                      {/* Dynamic Brand Billboard Rotating Brands (Grand & Full-Bleed 16:9) */}
+                      <div className="mb-3">
+                        <CategoryBrandBillboard
+                          brandImages={cat.brand_images}
+                          categoryName={localizedName}
+                        />
                       </div>
-                      <ForwardArrow className={`w-5 h-5 text-slate-400 dark:text-zinc-600 group-hover:text-emerald-500 dark:group-hover:text-emerald-400 ${isRTL ? 'group-hover:-translate-x-1' : 'group-hover:translate-x-1'} transition-all duration-300`} />
+
+                      <div className="flex items-center justify-between gap-2 px-0.5">
+                        <h3 className="font-extrabold text-base sm:text-lg text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">
+                          {localizedName}
+                        </h3>
+                        <ForwardArrow className={`w-4 h-4 text-slate-400 dark:text-zinc-600 group-hover:text-emerald-500 dark:group-hover:text-emerald-400 ${isRTL ? 'group-hover:-translate-x-1' : 'group-hover:translate-x-1'} transition-all duration-300 shrink-0`} />
+                      </div>
                     </div>
-                    <h3 className="font-bold text-slate-900 dark:text-white mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">{cat.name}</h3>
-                    <p className="text-sm text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
-                      <ShoppingBasket className="w-3.5 h-3.5 text-emerald-500/80 dark:text-emerald-400/70" />
-                      {count} {t.home.productsCount}
-                    </p>
+
+                    <div className="pt-3.5 mt-3.5 border-t border-slate-100 dark:border-zinc-800/60 flex items-center justify-between px-0.5">
+                      <p className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
+                        <ShoppingBasket className="w-3.5 h-3.5 text-emerald-500/80 dark:text-emerald-400/70" />
+                        {count} {t.home.productsCount}
+                      </p>
+                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 opacity-90 group-hover:opacity-100 group-hover:underline transition-all">
+                        {t.home.viewCategory}
+                      </span>
+                    </div>
                   </button>
                 );
               })}
