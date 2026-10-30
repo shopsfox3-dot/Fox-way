@@ -26,6 +26,7 @@ export interface Product {
   name: string;
   description: string | null;
   price: number;           // سعر الحبة المفردة
+  cost_price?: number | null; // سعر التكلفة التقديري (خاص بالأدمن)
   unit: string;
   stock: number;
   image_url: string | null;
@@ -35,6 +36,7 @@ export interface Product {
   units_per_pack: number | null;  // عدد الحبات في الكرتونة
   pack_label: string | null;      // اسم الوحدة الكبيرة
   pack_price: number | null;      // سعر الحبة عند الشراء بالكرتونة (null = نفس سعر الحبة)
+  barcode?: string | null;        // باركود المنتج
 }
 
 export interface ShopType {

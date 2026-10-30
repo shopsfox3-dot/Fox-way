@@ -287,6 +287,134 @@ export async function updateProductPackInfo(
   }
 }
 
+export async function createProduct(prod: {
+  category_id: string;
+  name: string;
+  description?: string | null;
+  price: number;
+  cost_price?: number | null;
+  unit?: string;
+  stock?: number;
+  image_url?: string | null;
+  units_per_pack?: number | null;
+  pack_label?: string | null;
+  pack_price?: number | null;
+  barcode?: string | null;
+  sort_order?: number;
+}): Promise<{ data: Product | null; error: string | null }> {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .insert({
+        category_id: prod.category_id,
+        name: prod.name.trim(),
+        description: prod.description ? prod.description.trim() : null,
+        price: prod.price,
+        cost_price: prod.cost_price ?? null,
+        unit: prod.unit || 'حبة',
+        stock: prod.stock ?? 0,
+        image_url: prod.image_url || null,
+        units_per_pack: prod.units_per_pack ?? null,
+        pack_label: prod.pack_label ? prod.pack_label.trim() : null,
+        pack_price: prod.pack_price ?? null,
+        barcode: prod.barcode ? prod.barcode.trim() : null,
+        sort_order: prod.sort_order ?? 0,
+      })
+      .select()
+      .single();
+
+    if (error) return { data: null, error: error.message };
+    return { data: data as Product, error: null };
+  } catch (err: unknown) {
+    return { data: null, error: err instanceof Error ? err.message : 'حدث خطأ أثناء إضافة المنتج' };
+  }
+}
+
+export async function updateProduct(
+  id: string,
+  updates: Partial<{
+    category_id: string;
+    name: string;
+    description: string | null;
+    price: number;
+    cost_price: number | null;
+    unit: string;
+    stock: number;
+    image_url: string | null;
+    units_per_pack: number | null;
+    pack_label: string | null;
+    pack_price: number | null;
+    barcode: string | null;
+    sort_order: number;
+    market_unavailable: boolean;
+  }>
+): Promise<{ success: boolean; error: string | null }> {
+  try {
+    const { error } = await supabase
+      .from('products')
+      .update(updates)
+      .eq('id', id);
+
+    if (error) return { success: false, error: error.message };
+    return { success: true, error: null };
+  } catch (err: unknown) {
+    return { success: false, error: err instanceof Error ? err.message : 'حدث خطأ أثناء تعديل المنتج' };
+  }
+}
+
+export async function deleteProduct(
+  id: string
+): Promise<{ success: boolean; error: string | null }> {
+  try {
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', id);
+
+    if (error) return { success: false, error: error.message };
+    return { success: true, error: null };
+  } catch (err: unknown) {
+    return { success: false, error: err instanceof Error ? err.message : 'حدث خطأ أثناء حذف المنتج' };
+  }
+}
+
+export async function uploadProductImage(
+  file: File
+): Promise<{ url: string | null; error: string | null }> {
+  try {
+    if (!file.type.startsWith('image/')) {
+      return { url: null, error: 'الملف المختار ليس صورة صالحة' };
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      return { url: null, error: 'حجم الصورة كبير جداً (الحد الأقصى 5 ميغابايت)' };
+    }
+
+    const fileExt = file.name.split('.').pop() || 'png';
+    const fileName = `product_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+    const filePath = `items/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('product-images')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    if (uploadError) {
+      return { url: null, error: uploadError.message };
+    }
+
+    const { data } = supabase.storage
+      .from('product-images')
+      .getPublicUrl(filePath);
+
+    return { url: data.publicUrl, error: null };
+  } catch (err: unknown) {
+    return { url: null, error: err instanceof Error ? err.message : 'فشل رفع صورة المنتج' };
+  }
+}
+
+
 export async function fetchProductCountByCategory(): Promise<Record<string, number>> {
   try {
     const { data, error } = await supabase
