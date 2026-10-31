@@ -378,6 +378,34 @@ export async function deleteProduct(
   }
 }
 
+export async function bulkUpsertProducts(
+  prods: Array<{
+    category_id: string;
+    name: string;
+    price: number;
+    cost_price?: number | null;
+    unit?: string;
+    units_per_pack?: number | null;
+    pack_label?: string | null;
+    pack_price?: number | null;
+    barcode?: string | null;
+    stock?: number;
+  }>
+): Promise<{ count: number; error: string | null }> {
+  try {
+    if (prods.length === 0) return { count: 0, error: null };
+    const { data, error } = await supabase
+      .from('products')
+      .insert(prods)
+      .select('id');
+
+    if (error) return { count: 0, error: error.message };
+    return { count: data?.length || 0, error: null };
+  } catch (err: unknown) {
+    return { count: 0, error: err instanceof Error ? err.message : 'فشل استيراد المنتجات' };
+  }
+}
+
 export async function uploadProductImage(
   file: File
 ): Promise<{ url: string | null; error: string | null }> {

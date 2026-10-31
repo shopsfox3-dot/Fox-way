@@ -64,9 +64,11 @@ import {
   PanelLeftOpen,
   PanelRightClose,
   PanelLeftClose,
+  FileSpreadsheet,
 } from 'lucide-react';
 import CategoryManager from '@/components/admin/CategoryManager';
 import ProductManager from '@/components/admin/ProductManager';
+import InventoryExcelHub from '@/components/admin/InventoryExcelHub';
 import AdminSidebar, { AdminSection } from '@/components/admin/AdminSidebar';
 
 interface AdminAccountsPageProps {
@@ -109,6 +111,7 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('pending');
   const [orderTab, setOrderTab] = useState<OrderTabType>('abandoned_carts');
+  const [inventoryTab, setInventoryTab] = useState<'products' | 'categories' | 'excel'>('products');
   const [searchTerm, setSearchTerm] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
@@ -845,13 +848,91 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
               </div>
             </div>
           ) : currentSection === 'inventory' ? (
-            <CategoryManager
-              categories={categories}
-              products={products}
-              onRefresh={loadData}
-              isRTL={isRTL}
-              language={language}
-            />
+            <div className="space-y-6">
+              {/* Inventory Hub Sub-Navigation Bar */}
+              <div className="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-[#121215] p-3 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setInventoryTab('products')}
+                    className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
+                      inventoryTab === 'products'
+                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-extrabold shadow-sm'
+                        : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
+                    }`}
+                  >
+                    <Package className="w-4 h-4" />
+                    <span>{language === 'ar' ? 'إدارة المنتجات وقائمة الأسعار' : 'Produits & Tarifs'}</span>
+                    <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${
+                      inventoryTab === 'products' ? 'bg-white/30 text-white' : 'bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400'
+                    }`}>
+                      {products.length}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setInventoryTab('categories')}
+                    className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
+                      inventoryTab === 'categories'
+                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-extrabold shadow-sm'
+                        : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
+                    }`}
+                  >
+                    <Layers className="w-4 h-4" />
+                    <span>{language === 'ar' ? 'الأقسام والفئات والماركات' : 'Catégories & Marques'}</span>
+                    <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${
+                      inventoryTab === 'categories' ? 'bg-white/30 text-white' : 'bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400'
+                    }`}>
+                      {categories.length}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setInventoryTab('excel')}
+                    className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
+                      inventoryTab === 'excel'
+                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-extrabold shadow-sm'
+                        : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
+                    }`}
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
+                    <span>{language === 'ar' ? 'استيراد وتصدير إكسل' : 'Import / Export Excel'}</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500 dark:text-emerald-400 font-extrabold border border-emerald-500/30">
+                      CSV / XLSX
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Sub-tab content */}
+              {inventoryTab === 'products' ? (
+                <ProductManager
+                  products={products}
+                  categories={categories}
+                  onRefresh={loadData}
+                  isRTL={isRTL}
+                  language={language}
+                />
+              ) : inventoryTab === 'categories' ? (
+                <CategoryManager
+                  categories={categories}
+                  products={products}
+                  onRefresh={loadData}
+                  isRTL={isRTL}
+                  language={language}
+                />
+              ) : (
+                <InventoryExcelHub
+                  products={products}
+                  categories={categories}
+                  onRefresh={loadData}
+                  isRTL={isRTL}
+                  language={language}
+                />
+              )}
+            </div>
           ) : currentSection === 'routes' || currentSection === 'delivery' || currentSection === 'special_requests' || currentSection === 'promotions' || currentSection === 'radar' || currentSection === 'treasury' || currentSection === 'purchases' || currentSection === 'reports' || currentSection === 'staff' || currentSection === 'suppliers' ? (
             <div className="bg-white dark:bg-[#121215] rounded-3xl border border-slate-200 dark:border-zinc-800 p-8 sm:p-12 text-center shadow-sm max-w-2xl mx-auto my-8">
               <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center mx-auto mb-4">
