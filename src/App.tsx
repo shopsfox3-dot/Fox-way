@@ -92,6 +92,10 @@ function AppContent() {
     setPage('products');
   };
 
+  if (page === 'admin') {
+    return <AdminAccountsPage onBack={() => setPage('home')} />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-[#09090b] dark:text-zinc-100 transition-colors duration-200" dir={dir}>
       <Header onNavigate={navigate} currentPage={page} />
@@ -105,7 +109,6 @@ function AppContent() {
           />
         )}
         {page === 'cart' && <CartPage onBack={() => setPage('home')} />}
-        {page === 'admin' && <AdminAccountsPage onBack={() => setPage('home')} />}
       </main>
     </div>
   );

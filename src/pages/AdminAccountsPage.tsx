@@ -50,21 +50,50 @@ import {
   Sun,
   Moon,
   Layers,
+  Menu,
+  LayoutDashboard,
+  Boxes,
+  Camera,
+  Zap,
+  Radio,
+  Wallet,
+  Truck,
+  Building2,
+  BarChart3,
+  PanelRightOpen,
+  PanelLeftOpen,
+  PanelRightClose,
+  PanelLeftClose,
 } from 'lucide-react';
 import CategoryManager from '@/components/admin/CategoryManager';
 import ProductManager from '@/components/admin/ProductManager';
+import AdminSidebar, { AdminSection } from '@/components/admin/AdminSidebar';
 
 interface AdminAccountsPageProps {
   onBack: () => void;
 }
 
 type TabType = 'pending' | 'approved' | 'rejected' | 'all' | 'categories' | 'products' | 'abandoned_carts' | 'security_logs';
+type OrderTabType = 'all_orders' | 'new_orders' | 'preparing' | 'in_van' | 'delivered' | 'abandoned_carts';
 
 export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
   const { profile: currentAdmin } = useAuth();
-  const { t, language, isRTL, dir } = useLanguage();
+  const { t, language, setLanguage, languages, isRTL, dir } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const BackArrow = isRTL ? ArrowRight : ArrowLeft;
+
+  const [currentSection, setCurrentSection] = useState<AdminSection>('dashboard');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [clearedNotifications, setClearedNotifications] = useState<{
+    clients: boolean;
+    orders: boolean;
+    securityLogs: boolean;
+  }>({
+    clients: false,
+    orders: false,
+    securityLogs: false,
+  });
 
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [shopTypes, setShopTypes] = useState<ShopType[]>([]);
@@ -79,6 +108,7 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('pending');
+  const [orderTab, setOrderTab] = useState<OrderTabType>('abandoned_carts');
   const [searchTerm, setSearchTerm] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
@@ -411,368 +441,660 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
   }
 
   return (
-    <div dir={dir} className="max-w-6xl mx-auto px-4 py-6">
-      {/* Top bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <button
-            onClick={onBack}
-            className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors mb-2 text-sm font-semibold group"
-          >
-            <BackArrow className={`w-4 h-4 ${isRTL ? 'group-hover:-translate-x-1' : 'group-hover:translate-x-1'} transition-transform`} />
-            <span>{t.admin.backToStore}</span>
-          </button>
+    <div dir={dir} className="min-h-screen bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-slate-100 transition-colors">
+      {/* Dark Modern Fixed CRM Sidebar */}
+      <AdminSidebar
+        currentSection={currentSection}
+        onSelectSection={(sec) => {
+          setCurrentSection(sec);
+          if (sec === 'clients') {
+            setActiveTab('pending');
+            setClearedNotifications((prev) => ({ ...prev, clients: true }));
+          }
+          if (sec === 'orders') {
+            setOrderTab('abandoned_carts');
+            setClearedNotifications((prev) => ({ ...prev, orders: true }));
+          }
+          if (sec === 'security_logs') {
+            setActiveTab('security_logs');
+            setClearedNotifications((prev) => ({ ...prev, securityLogs: true }));
+          }
+        }}
+        isOpen={isMobileSidebarOpen}
+        onClose={() => setIsMobileSidebarOpen(false)}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
+        isRTL={isRTL}
+        language={language}
+        onBackToStore={onBack}
+        counts={{
+          pendingClients: clearedNotifications.clients ? 0 : pendingCount,
+          abandonedCarts: clearedNotifications.orders ? 0 : abandonedCarts.length,
+          securityLogs: clearedNotifications.securityLogs ? 0 : loginAttempts.length,
+        }}
+      />
+
+      {/* Main Content Area - Fluid space from sidebar */}
+      <div className={`min-h-screen flex flex-col transition-all duration-300 ${
+        isSidebarCollapsed ? (isRTL ? 'lg:mr-20' : 'lg:ml-20') : (isRTL ? 'lg:mr-72' : 'lg:ml-72')
+      }`}>
+        {/* Sticky Executive Top Bar */}
+        <header className="sticky top-0 z-30 h-16 bg-white/95 dark:bg-[#0c1322]/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/80 px-4 sm:px-6 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-sm dark:shadow-neon-sm">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
+            {/* Mobile sidebar toggle button - sleek matching rectangular icon! */}
+            <button
+              type="button"
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="lg:hidden p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-200 dark:border-slate-800/80 shadow-sm"
+              title="القائمة"
+            >
+              {isRTL ? <PanelRightOpen className="w-4 h-4 text-emerald-500" /> : <PanelLeftOpen className="w-4 h-4 text-emerald-500" />}
+            </button>
+
+            {/* Desktop sidebar toggle button - always in the exact same line! */}
+            <button
+              type="button"
+              onClick={() => setIsSidebarCollapsed((prev) => !prev)}
+              className="hidden lg:flex p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-200 dark:border-slate-800/80 shadow-sm"
+              title={isSidebarCollapsed ? 'توسيع القائمة الجانبية' : 'طي القائمة الجانبية'}
+            >
+              {isSidebarCollapsed ? (
+                isRTL ? <PanelRightOpen className="w-4 h-4 text-emerald-500" /> : <PanelLeftOpen className="w-4 h-4 text-emerald-500" />
+              ) : (
+                isRTL ? <PanelRightClose className="w-4 h-4 text-emerald-500" /> : <PanelLeftClose className="w-4 h-4 text-emerald-500" />
+              )}
+            </button>
+
+            {/* Clean Section Name - No repetitive Fox-way CRM */}
             <div>
-              <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">{t.admin.dashboardTitle}</h1>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400">{t.admin.tabs.all}</p>
+              <h1 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                  {currentSection === 'dashboard' && (
+                    <>
+                      <LayoutDashboard className="w-5 h-5 text-emerald-500" />
+                      <span>{language === 'ar' ? 'لوحة المراقبة العامة' : 'Tableau de bord'}</span>
+                    </>
+                  )}
+                  {currentSection === 'inventory' && (
+                    <>
+                      <Boxes className="w-5 h-5 text-emerald-500" />
+                      <span>{language === 'ar' ? 'المخزون والسلع' : 'Stock & Inventaire'}</span>
+                    </>
+                  )}
+                  {currentSection === 'clients' && (
+                    <>
+                      <Users className="w-5 h-5 text-emerald-500" />
+                      <span>{language === 'ar' ? 'العملاء والمحلات' : 'Clients & Magasins'}</span>
+                    </>
+                  )}
+                  {currentSection === 'orders' && (
+                    <>
+                      <ShoppingBag className="w-5 h-5 text-emerald-500" />
+                      <span>{language === 'ar' ? 'الطلبيات والسلات المعلقة' : 'Commandes'}</span>
+                    </>
+                  )}
+                  {currentSection === 'security_logs' && (
+                    <>
+                      <ShieldAlert className="w-5 h-5 text-indigo-500" />
+                      <span>{language === 'ar' ? 'سجلات الأمان والتسجيل' : 'Sécurité'}</span>
+                    </>
+                  )}
+                  {currentSection === 'routes' && (
+                    <>
+                      <MapPin className="w-5 h-5 text-emerald-500" />
+                      <span>{language === 'ar' ? 'مسارات التوزيع والبلديات' : 'Tournées'}</span>
+                    </>
+                  )}
+                  {currentSection === 'delivery' && (
+                    <>
+                      <Truck className="w-5 h-5 text-blue-500" />
+                      <span>{language === 'ar' ? 'الشاحنة والتوصيل' : 'Livraison'}</span>
+                    </>
+                  )}
+                  {currentSection === 'special_requests' && (
+                    <>
+                      <Camera className="w-5 h-5 text-purple-500" />
+                      <span>{language === 'ar' ? 'سلعة ناقصة في السوق' : 'Demandes'}</span>
+                    </>
+                  )}
+                  {currentSection === 'promotions' && (
+                    <>
+                      <Zap className="w-5 h-5 text-amber-500" />
+                      <span>{language === 'ar' ? 'عروض كراتين فورية' : 'Offres Flash'}</span>
+                    </>
+                  )}
+                  {currentSection === 'radar' && (
+                    <>
+                      <Radio className="w-5 h-5 text-cyan-500" />
+                      <span>{language === 'ar' ? 'رادار المحلات الراكدة' : 'Radar'}</span>
+                    </>
+                  )}
+                  {currentSection === 'purchases' && (
+                    <>
+                      <ShoppingBag className="w-5 h-5 text-emerald-500" />
+                      <span>{language === 'ar' ? 'مشتريات سوق الجملة (التبضع الصباحي)' : 'Achats Marché de Gros'}</span>
+                    </>
+                  )}
+                  {currentSection === 'treasury' && (
+                    <>
+                      <Wallet className="w-5 h-5 text-emerald-500" />
+                      <span>{language === 'ar' ? 'الخزينة والمصاريف اليومية' : 'Trésorerie & Dépenses'}</span>
+                    </>
+                  )}
+                  {currentSection === 'reports' && (
+                    <>
+                      <BarChart3 className="w-5 h-5 text-teal-500" />
+                      <span>{language === 'ar' ? 'التقارير والأرباح الصافية' : 'Rapports & Statistiques'}</span>
+                    </>
+                  )}
+                  {currentSection === 'staff' && (
+                    <>
+                      <UserCheck className="w-5 h-5 text-blue-500" />
+                      <span>{language === 'ar' ? 'فريق العمل والصلاحيات' : 'Équipe & Permissions'}</span>
+                    </>
+                  )}
+                  {currentSection === 'suppliers' && (
+                    <>
+                      <Building2 className="w-5 h-5 text-amber-500" />
+                      <span>{language === 'ar' ? 'الموردون والشركات وفواتير الشراء' : 'Fournisseurs & Factures'}</span>
+                    </>
+                  )}
+                </h1>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          {/* Theme switcher */}
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-[#121215] border border-slate-200 dark:border-zinc-800 hover:border-emerald-500/50 rounded-xl text-slate-700 dark:text-zinc-200 text-sm font-medium shadow-sm transition-all ring-1 ring-slate-900/5 dark:ring-white/5"
-            title={theme === 'dark' ? t.nav.themeLight : t.nav.themeDark}
-          >
-            {theme === 'dark' ? (
-              <Sun className="w-4 h-4 text-amber-400" />
-            ) : (
-              <Moon className="w-4 h-4 text-indigo-500" />
-            )}
-            <span className="text-xs font-bold hidden sm:inline">
-              {theme === 'dark' ? t.nav.themeLight : t.nav.themeDark}
-            </span>
-          </button>
-
-          <button
-            onClick={() => loadData(true)}
-            disabled={refreshing}
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#121215] border border-slate-200 dark:border-zinc-800 hover:border-emerald-500/50 rounded-xl text-slate-700 dark:text-zinc-200 text-sm font-medium shadow-sm transition-all disabled:opacity-50 ring-1 ring-slate-900/5 dark:ring-white/5"
-          >
-            <RefreshCw className={`w-4 h-4 text-emerald-600 dark:text-emerald-400 ${refreshing ? 'animate-spin' : ''}`} />
-            <span>{t.common.refresh}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Success banner */}
-      {successMessage && (
-        <div className="mb-6 p-4 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-400 rounded-2xl text-sm flex items-center gap-3 shadow-sm dark:shadow-neon-sm ring-1 ring-emerald-500/20 animate-fade-in-up">
-          <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-          <span className="font-bold">{successMessage}</span>
-        </div>
-      )}
-
-      {/* Stats Cards - Higgsfield Carbon & Glow */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 mb-6">
-        <div
-          onClick={() => setActiveTab('pending')}
-          className={`cursor-pointer p-4 rounded-2xl border transition-all duration-200 ring-1 ring-slate-900/5 dark:ring-white/5 ${
-            activeTab === 'pending'
-              ? 'bg-amber-50 dark:bg-amber-500/15 border-amber-300 dark:border-amber-500/50 shadow-sm dark:shadow-neon-sm ring-2 ring-amber-500/20'
-              : 'bg-white dark:bg-[#121215] border-slate-200 dark:border-zinc-800 hover:border-amber-500/40 shadow-sm'
-          }`}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">{t.admin.stats.pendingTitle}</span>
-            <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-500/15 border border-amber-300 dark:border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
-              <Clock className="w-4 h-4" />
+          {/* Top Actions: Language, Theme, Refresh, Back to Store */}
+          <div className="flex items-center gap-2">
+            {/* Language Switcher */}
+            <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 rounded-xl p-0.5 border border-slate-200 dark:border-slate-700/60">
+              {languages.map((lang) => (
+                <button
+                  key={lang.code}
+                  type="button"
+                  onClick={() => setLanguage(lang.code)}
+                  className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+                    language === lang.code
+                      ? 'bg-white dark:bg-emerald-500 text-slate-900 dark:text-zinc-950 shadow-sm'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  {lang.code.toUpperCase()}
+                </button>
+              ))}
             </div>
-          </div>
-          <p className="text-2xl font-extrabold text-slate-900 dark:text-white">{pendingCount}</p>
-          <p className="text-[11px] text-amber-600 dark:text-amber-400/80 mt-1">{t.admin.stats.pendingSub}</p>
-        </div>
 
-        <div
-          onClick={() => setActiveTab('approved')}
-          className={`cursor-pointer p-4 rounded-2xl border transition-all duration-200 ring-1 ring-slate-900/5 dark:ring-white/5 ${
-            activeTab === 'approved'
-              ? 'bg-emerald-50 dark:bg-emerald-500/15 border-emerald-300 dark:border-emerald-500/50 shadow-sm dark:shadow-neon-sm ring-2 ring-emerald-500/20'
-              : 'bg-white dark:bg-[#121215] border-slate-200 dark:border-zinc-800 hover:border-emerald-500/40 shadow-sm'
-          }`}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">{t.admin.stats.approvedTitle}</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-500/15 border border-emerald-300 dark:border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <CheckCircle2 className="w-4 h-4" />
+            {/* Theme switcher */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="p-2 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 hover:border-emerald-500/50 rounded-xl text-slate-700 dark:text-zinc-200 shadow-sm transition-all"
+              title={theme === 'dark' ? t.nav.themeLight : t.nav.themeDark}
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-500" />}
+            </button>
+
+            {/* Refresh */}
+            <button
+              onClick={() => loadData(true)}
+              disabled={refreshing}
+              className="p-2 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 hover:border-emerald-500/50 rounded-xl text-slate-700 dark:text-zinc-200 shadow-sm transition-all disabled:opacity-50"
+              title={t.common.refresh}
+            >
+              <RefreshCw className={`w-4 h-4 text-emerald-500 ${refreshing ? 'animate-spin' : ''}`} />
+            </button>
+
+            {/* Back to store */}
+            <button
+              onClick={onBack}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold transition-all"
+            >
+              <BackArrow className="w-3.5 h-3.5" />
+              <span>{t.admin.backToStore}</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Content Body */}
+        <main className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto">
+          {/* Success banner */}
+          {successMessage && (
+            <div className="mb-6 p-4 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-400 rounded-2xl text-sm flex items-center gap-3 shadow-sm dark:shadow-neon-sm ring-1 ring-emerald-500/20 animate-fade-in-up">
+              <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+              <span className="font-bold">{successMessage}</span>
             </div>
-          </div>
-          <p className="text-2xl font-extrabold text-slate-900 dark:text-white">{approvedCount}</p>
-          <p className="text-[11px] text-emerald-600 dark:text-emerald-400/80 mt-1">{t.admin.stats.approvedSub}</p>
-        </div>
-
-        <div
-          onClick={() => setActiveTab('rejected')}
-          className={`cursor-pointer p-4 rounded-2xl border transition-all duration-200 ring-1 ring-slate-900/5 dark:ring-white/5 ${
-            activeTab === 'rejected'
-              ? 'bg-rose-50 dark:bg-red-500/15 border-rose-300 dark:border-red-500/50 shadow-sm dark:shadow-neon-sm ring-2 ring-red-500/20'
-              : 'bg-white dark:bg-[#121215] border-slate-200 dark:border-zinc-800 hover:border-red-500/40 shadow-sm'
-          }`}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-rose-700 dark:text-red-400">{t.admin.stats.rejectedTitle}</span>
-            <div className="w-8 h-8 rounded-xl bg-rose-100 dark:bg-red-500/15 border border-rose-300 dark:border-red-500/30 flex items-center justify-center text-rose-600 dark:text-red-400">
-              <XCircle className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-2xl font-extrabold text-slate-900 dark:text-white">{rejectedCount}</p>
-          <p className="text-[11px] text-rose-600 dark:text-red-400/80 mt-1">{t.admin.stats.rejectedSub}</p>
-        </div>
-
-        <div
-          onClick={() => setActiveTab('products')}
-          className={`cursor-pointer p-4 rounded-2xl border transition-all duration-200 ring-1 ring-slate-900/5 dark:ring-white/5 ${
-            activeTab === 'products'
-              ? 'bg-emerald-50 dark:bg-emerald-500/15 border-emerald-300 dark:border-emerald-500/50 shadow-sm dark:shadow-neon-sm ring-2 ring-emerald-500/20'
-              : 'bg-white dark:bg-[#121215] border-slate-200 dark:border-zinc-800 hover:border-emerald-500/40 shadow-sm'
-          }`}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">{t.admin.stats.productsTitle}</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-500/15 border border-emerald-300 dark:border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <Package className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-2xl font-extrabold text-slate-900 dark:text-white">{products.length}</p>
-          <p className="text-[11px] text-emerald-600 dark:text-emerald-400/80 mt-1">
-            {products.filter((p) => p.market_unavailable).length > 0
-              ? `${products.filter((p) => p.market_unavailable).length} ${t.admin.stats.productsOutageSub}`
-              : t.admin.stats.productsJitSub}
-          </p>
-        </div>
-
-        <div
-          onClick={() => setActiveTab('abandoned_carts')}
-          className={`cursor-pointer p-4 rounded-2xl border transition-all duration-200 ring-1 ring-slate-900/5 dark:ring-white/5 ${
-            activeTab === 'abandoned_carts'
-              ? 'bg-amber-50 dark:bg-amber-500/15 border-amber-300 dark:border-amber-500/50 shadow-sm dark:shadow-neon-sm ring-2 ring-amber-500/20'
-              : 'bg-white dark:bg-[#121215] border-slate-200 dark:border-zinc-800 hover:border-amber-500/40 shadow-sm'
-          }`}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">{t.admin.stats.cartsTitle}</span>
-            <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-500/15 border border-amber-300 dark:border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
-              <ShoppingBag className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-2xl font-extrabold text-slate-900 dark:text-white">{abandonedCarts.length}</p>
-          <p className="text-[11px] text-amber-600 dark:text-amber-400/80 mt-1">{t.admin.stats.cartsSub}</p>
-        </div>
-
-        <div
-          onClick={() => setActiveTab('security_logs')}
-          className={`cursor-pointer p-4 rounded-2xl border transition-all duration-200 ring-1 ring-slate-900/5 dark:ring-white/5 ${
-            activeTab === 'security_logs'
-              ? 'bg-indigo-50 dark:bg-indigo-500/15 border-indigo-300 dark:border-indigo-500/50 shadow-sm dark:shadow-neon-sm ring-2 ring-indigo-500/20'
-              : 'bg-white dark:bg-[#121215] border-slate-200 dark:border-zinc-800 hover:border-indigo-500/40 shadow-sm'
-          }`}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-indigo-700 dark:text-indigo-400">{t.admin.stats.securityTitle}</span>
-            <div className="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-500/15 border border-indigo-300 dark:border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-              <ShieldAlert className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-2xl font-extrabold text-slate-900 dark:text-white">{loginAttempts.length}</p>
-          <p className="text-[11px] text-indigo-600 dark:text-indigo-400/80 mt-1">{t.admin.stats.securitySub}</p>
-        </div>
-      </div>
-
-      {/* Tabs & Search */}
-      <div className="bg-white dark:bg-[#121215] rounded-2xl border border-slate-200 dark:border-zinc-800/90 p-4 mb-6 shadow-sm dark:shadow-2xl ring-1 ring-slate-900/5 dark:ring-white/5">
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
-          {/* Tabs */}
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => setActiveTab('pending')}
-              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
-                activeTab === 'pending'
-                  ? 'bg-amber-500 text-zinc-950 font-extrabold shadow-sm'
-                  : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-zinc-800'
-              }`}
-            >
-              <Clock className="w-4 h-4" />
-              <span>{t.admin.tabs.pending}</span>
-              <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${activeTab === 'pending' ? 'bg-zinc-950/40 text-zinc-950 font-black' : 'bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800'}`}>
-                {pendingCount}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('approved')}
-              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
-                activeTab === 'approved'
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-extrabold shadow-sm'
-                  : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-zinc-800'
-              }`}
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>{t.admin.tabs.approved}</span>
-              <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${activeTab === 'approved' ? 'bg-white/30 text-white font-black' : 'bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800'}`}>
-                {approvedCount}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('rejected')}
-              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
-                activeTab === 'rejected'
-                  ? 'bg-rose-600 text-white font-extrabold shadow-sm'
-                  : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-zinc-800'
-              }`}
-            >
-              <XCircle className="w-4 h-4" />
-              <span>{t.admin.tabs.rejected}</span>
-              <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${activeTab === 'rejected' ? 'bg-white/30 text-white font-black' : 'bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800'}`}>
-                {rejectedCount}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('all')}
-              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
-                activeTab === 'all'
-                  ? 'bg-slate-800 dark:bg-zinc-100 text-white dark:text-zinc-950 font-extrabold shadow-sm'
-                  : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-zinc-800'
-              }`}
-            >
-              <Users className="w-4 h-4" />
-              <span>{t.admin.tabs.all}</span>
-              <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${activeTab === 'all' ? 'bg-white/30 dark:bg-zinc-300 text-white dark:text-zinc-950 font-black' : 'bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800'}`}>
-                {profiles.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('categories')}
-              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
-                activeTab === 'categories'
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-extrabold shadow-sm'
-                  : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-zinc-800'
-              }`}
-            >
-              <Layers className="w-4 h-4" />
-              <span>{t.admin.tabs.categories}</span>
-              <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${
-                activeTab === 'categories'
-                  ? 'bg-white/30 text-white font-black'
-                  : 'bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800'
-              }`}>
-                {categories.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('products')}
-              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
-                activeTab === 'products'
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-extrabold shadow-sm'
-                  : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-zinc-800'
-              }`}
-            >
-              <Package className="w-4 h-4" />
-              <span>{t.admin.tabs.products}</span>
-              <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${
-                activeTab === 'products'
-                  ? 'bg-white/30 text-white font-black'
-                  : products.filter((p) => p.market_unavailable).length > 0
-                  ? 'bg-rose-100 dark:bg-red-500/20 text-rose-700 dark:text-red-400 border border-rose-200 dark:border-red-500/30 font-bold'
-                  : 'bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800'
-              }`}>
-                {products.filter((p) => p.market_unavailable).length > 0
-                  ? `${products.filter((p) => p.market_unavailable).length} ${t.admin.stats.productsOutageSub}`
-                  : products.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('abandoned_carts')}
-              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
-                activeTab === 'abandoned_carts'
-                  ? 'bg-amber-500 text-zinc-950 font-extrabold shadow-sm'
-                  : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-zinc-800'
-              }`}
-            >
-              <ShoppingBag className="w-4 h-4" />
-              <span>{t.admin.tabs.abandonedCarts}</span>
-              <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${
-                activeTab === 'abandoned_carts'
-                  ? 'bg-zinc-950/40 text-zinc-950 font-black'
-                  : abandonedCarts.length > 0
-                  ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-500/30 font-bold'
-                  : 'bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800'
-              }`}>
-                {abandonedCarts.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('security_logs')}
-              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
-                activeTab === 'security_logs'
-                  ? 'bg-indigo-600 text-white font-extrabold shadow-sm'
-                  : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-zinc-800'
-              }`}
-            >
-              <ShieldAlert className="w-4 h-4" />
-              <span>{t.admin.tabs.securityLogs}</span>
-              <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${activeTab === 'security_logs' ? 'bg-white/30 text-white font-black' : 'bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800'}`}>
-                {loginAttempts.length}
-              </span>
-            </button>
-          </div>
-
-          {/* Search bar */}
-          <div className="relative w-full lg:w-72 shrink-0">
-            <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 dark:text-emerald-400 pointer-events-none`} />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={
-                activeTab === 'products'
-                  ? t.admin.searchPlaceholders.products
-                  : activeTab === 'categories'
-                  ? t.admin.searchPlaceholders.categories
-                  : activeTab === 'security_logs'
-                  ? t.admin.searchPlaceholders.securityLogs
-                  : t.admin.searchPlaceholders.accounts
-              }
-              className={`w-full bg-slate-50 dark:bg-zinc-900/90 border border-slate-200 dark:border-zinc-800 rounded-xl ${
-                isRTL ? 'pr-9 pl-3 text-right' : 'pl-9 pr-3 text-left'
-              } py-2 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all shadow-inner`}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content Area */}
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-[#121215] rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm ring-1 ring-slate-900/5 dark:ring-white/5">
-          <Loader2 className="w-8 h-8 text-emerald-600 dark:text-emerald-400 animate-spin mb-3" />
-          <p className="text-sm text-slate-500 dark:text-zinc-400">{t.admin.accountsTab.loadingAccounts}</p>
-        </div>
-      ) : activeTab === 'categories' ? (
-        <CategoryManager
-          categories={categories.filter((c) =>
-            searchTerm.trim()
-              ? c.name.toLowerCase().includes(searchTerm.toLowerCase().trim()) ||
-                (c.name_fr && c.name_fr.toLowerCase().includes(searchTerm.toLowerCase().trim()))
-              : true
           )}
-          products={products}
-          onRefresh={loadData}
-          isRTL={isRTL}
-          language={language}
-        />
-      ) : activeTab === 'security_logs' ? (
+
+          {/* Main Content Area */}
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-[#121215] rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm ring-1 ring-slate-900/5 dark:ring-white/5">
+              <Loader2 className="w-8 h-8 text-emerald-600 dark:text-emerald-400 animate-spin mb-3" />
+              <p className="text-sm text-slate-500 dark:text-zinc-400">{t.admin.accountsTab.loadingAccounts}</p>
+            </div>
+          ) : currentSection === 'dashboard' ? (
+            <div className="space-y-6 animate-fade-in">
+              {/* Executive Welcome Banner */}
+              <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-emerald-950/20 relative overflow-hidden">
+                <div className="relative z-10 max-w-2xl">
+                  <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold uppercase tracking-wider text-emerald-100">
+                    FOX-WAY LOGISTICS & WHOLESALE
+                  </span>
+                  <h2 className="text-2xl sm:text-3xl font-black mt-3 mb-2">
+                    {language === 'ar' ? 'لوحة المراقبة وإدارة التوزيع' : 'Distribution Dashboard'}
+                  </h2>
+                  <p className="text-emerald-100 text-xs sm:text-sm leading-relaxed">
+                    {language === 'ar'
+                      ? 'مرحباً بك في نظام التوزيع الذكي. يمكنك إدارة المخزون، مراجعة المحلات، ومتابعة الطلبات المسبقة لشاحنة التوزيع من مكان واحد.'
+                      : 'Executive distribution and inventory management.'}
+                  </p>
+                </div>
+                <div className="absolute top-0 left-0 sm:left-10 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none -translate-x-1/2 -translate-y-1/2" />
+              </div>
+
+              {/* 4 Primary KPI Cards */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div
+                  onClick={() => {
+                    setCurrentSection('clients');
+                    setActiveTab('pending');
+                  }}
+                  className="cursor-pointer bg-white dark:bg-[#121215] p-5 rounded-2xl border border-slate-200 dark:border-zinc-800 hover:border-emerald-500/50 transition-all shadow-sm group"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-bold text-slate-500 dark:text-zinc-400">
+                      {language === 'ar' ? 'المحلات المسجلة' : 'Magasins Inscrits'}
+                    </span>
+                    <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                      <Users className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-black text-slate-900 dark:text-white">{profiles.length}</p>
+                  <p className="text-xs text-amber-500 font-bold mt-1">
+                    {pendingCount} {language === 'ar' ? 'طلب مراجعة معلق' : 'en attente'}
+                  </p>
+                </div>
+
+                <div
+                  onClick={() => setCurrentSection('inventory')}
+                  className="cursor-pointer bg-white dark:bg-[#121215] p-5 rounded-2xl border border-slate-200 dark:border-zinc-800 hover:border-emerald-500/50 transition-all shadow-sm group"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-bold text-slate-500 dark:text-zinc-400">
+                      {language === 'ar' ? 'أقسام السلع النشطة' : 'Catégories'}
+                    </span>
+                    <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                      <Boxes className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-black text-slate-900 dark:text-white">{categories.length}</p>
+                  <p className="text-xs text-emerald-500 font-bold mt-1">
+                    {products.length} {language === 'ar' ? 'منتج مفعل' : 'produits'}
+                  </p>
+                </div>
+
+                <div
+                  onClick={() => {
+                    setCurrentSection('orders');
+                    setActiveTab('abandoned_carts');
+                  }}
+                  className="cursor-pointer bg-white dark:bg-[#121215] p-5 rounded-2xl border border-slate-200 dark:border-zinc-800 hover:border-emerald-500/50 transition-all shadow-sm group"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-bold text-slate-500 dark:text-zinc-400">
+                      {language === 'ar' ? 'السلات قيد الانتظار' : 'Paniers brouillons'}
+                    </span>
+                    <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                      <ShoppingBag className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-black text-slate-900 dark:text-white">{abandonedCarts.length}</p>
+                  <p className="text-xs text-amber-600 dark:text-amber-400 font-bold mt-1">
+                    {language === 'ar' ? 'جاهزة للمتابعة الفورية' : 'à relancer'}
+                  </p>
+                </div>
+
+                <div
+                  onClick={() => {
+                    setCurrentSection('security_logs');
+                    setActiveTab('security_logs');
+                  }}
+                  className="cursor-pointer bg-white dark:bg-[#121215] p-5 rounded-2xl border border-slate-200 dark:border-zinc-800 hover:border-emerald-500/50 transition-all shadow-sm group"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-bold text-slate-500 dark:text-zinc-400">
+                      {language === 'ar' ? 'سجلات الأمان' : 'Sécurité'}
+                    </span>
+                    <div className="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center">
+                      <ShieldAlert className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-black text-slate-900 dark:text-white">{loginAttempts.length}</p>
+                  <p className="text-xs text-indigo-500 font-bold mt-1">
+                    {language === 'ar' ? 'عمليات تسجيل مدققة' : 'tentatives tracées'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Jump Shortcuts */}
+              <div className="bg-white dark:bg-[#121215] rounded-3xl p-6 border border-slate-200 dark:border-zinc-800 shadow-sm">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white mb-4">
+                  {language === 'ar' ? 'الوصول السريع لمهام اليوم' : 'Accès rapide'}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <button
+                    onClick={() => setCurrentSection('inventory')}
+                    className="p-4 rounded-2xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200/80 dark:border-zinc-800 hover:border-emerald-500/50 transition-all text-start group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
+                        <Boxes className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-emerald-400 transition-colors">
+                          {language === 'ar' ? 'إدارة المخزون والأقسام' : 'Gestion Stock'}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+                          {language === 'ar' ? 'الأقسام والماركات والسلع' : 'Rayons & Produits'}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setCurrentSection('clients');
+                      setActiveTab('pending');
+                    }}
+                    className="p-4 rounded-2xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200/80 dark:border-zinc-800 hover:border-emerald-500/50 transition-all text-start group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center">
+                        <Users className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-amber-400 transition-colors">
+                          {language === 'ar' ? 'مراجعة طلبات المحلات' : 'Validation Magasins'}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+                          {pendingCount} {language === 'ar' ? 'حساب بانتظار الموافقة' : 'en attente'}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setCurrentSection('orders');
+                      setActiveTab('abandoned_carts');
+                    }}
+                    className="p-4 rounded-2xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200/80 dark:border-zinc-800 hover:border-emerald-500/50 transition-all text-start group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
+                        <ShoppingBag className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-emerald-400 transition-colors">
+                          {language === 'ar' ? 'متابعة السلات المسودة' : 'Paniers brouillons'}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+                          {abandonedCarts.length} {language === 'ar' ? 'سلة جاهزة للتأكيد' : 'paniers prêts'}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : currentSection === 'inventory' ? (
+            <CategoryManager
+              categories={categories}
+              products={products}
+              onRefresh={loadData}
+              isRTL={isRTL}
+              language={language}
+            />
+          ) : currentSection === 'routes' || currentSection === 'delivery' || currentSection === 'special_requests' || currentSection === 'promotions' || currentSection === 'radar' || currentSection === 'treasury' || currentSection === 'purchases' || currentSection === 'reports' || currentSection === 'staff' || currentSection === 'suppliers' ? (
+            <div className="bg-white dark:bg-[#121215] rounded-3xl border border-slate-200 dark:border-zinc-800 p-8 sm:p-12 text-center shadow-sm max-w-2xl mx-auto my-8">
+              <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center mx-auto mb-4">
+                {currentSection === 'special_requests' ? (
+                  <Camera className="w-8 h-8" />
+                ) : currentSection === 'promotions' ? (
+                  <Zap className="w-8 h-8" />
+                ) : currentSection === 'treasury' ? (
+                  <Wallet className="w-8 h-8" />
+                ) : currentSection === 'routes' ? (
+                  <MapPin className="w-8 h-8" />
+                ) : currentSection === 'delivery' ? (
+                  <Truck className="w-8 h-8" />
+                ) : currentSection === 'purchases' ? (
+                  <ShoppingBag className="w-8 h-8" />
+                ) : currentSection === 'reports' ? (
+                  <BarChart3 className="w-8 h-8" />
+                ) : currentSection === 'staff' ? (
+                  <UserCheck className="w-8 h-8" />
+                ) : currentSection === 'suppliers' ? (
+                  <Building2 className="w-8 h-8" />
+                ) : (
+                  <Radio className="w-8 h-8" />
+                )}
+              </div>
+              <span className="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-extrabold uppercase tracking-wider">
+                {language === 'ar' ? 'قيد التطوير وفق خطة العمل' : 'Prochainement'}
+              </span>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white mt-3 mb-2">
+                {currentSection === 'purchases' && (language === 'ar' ? 'مشتريات سوق الجملة (ورقة الشراء وقائمة التبضع الصباحية)' : 'Approvisionnement Gros')}
+                {currentSection === 'routes' && (language === 'ar' ? 'مسارات التوزيع والبلديات' : 'Tournées de Distribution')}
+                {currentSection === 'delivery' && (language === 'ar' ? 'تسوية الشاحنة اليومية وحاسبة عمولة السائق' : 'Règlement Camion')}
+                {currentSection === 'treasury' && (language === 'ar' ? 'الخزينة والمصاريف اليومية ومتابعة الديون' : 'Trésorerie & Dettes')}
+                {currentSection === 'reports' && (language === 'ar' ? 'التقارير المالية والأرباح الصافية وحركة السلع' : 'Rapports & Statistiques')}
+                {currentSection === 'staff' && (language === 'ar' ? 'إدارة فريق العمل (السائق، المندوب، حجب الأسعار والتكلفة)' : 'Équipe & Permissions')}
+                {currentSection === 'suppliers' && (language === 'ar' ? 'سجل الموردين والشركات وفواتير الشراء' : 'Fournisseurs & Factures')}
+                {currentSection === 'special_requests' && (language === 'ar' ? 'سلعة ناقصة في السوق (Wishlist مع التصوير)' : 'Demandes Spéciales')}
+                {currentSection === 'promotions' && (language === 'ar' ? 'عروض كراتين فورية (Flash Deals للتصريف السريع)' : 'Offres Flash')}
+                {currentSection === 'radar' && (language === 'ar' ? 'رادار المحلات الراكدة المنقطعة عن الطلب' : 'Radar Magasins Inactifs')}
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 max-w-md mx-auto mb-6 leading-relaxed">
+                {language === 'ar'
+                  ? 'هذه الميزة مدرجة في خطة عمل Fox-way لمساعدة تجار الجملة والتوزيع. سيتم تفعيلها في الخطوات القادمة بعد اكتمال المخزون وتخصيص الأسعار.'
+                  : 'Cette fonctionnalité fait partie intégrante de la feuille de route Fox-way pour les grossistes.'}
+              </p>
+              <button
+                onClick={() => setCurrentSection('inventory')}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-xs sm:text-sm hover:brightness-110 transition-all shadow-sm shadow-emerald-500/20"
+              >
+                {language === 'ar' ? 'الانتقال إلى إدارة المخزون' : 'Gérer le stock'}
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Specialized Top Filter Bar according to active section */}
+              {currentSection === 'orders' ? (
+                <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+                  {/* Orders Specific Tabs */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setOrderTab('new_orders')}
+                      className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
+                        orderTab === 'new_orders'
+                          ? 'bg-emerald-500 text-zinc-950 font-extrabold shadow-sm'
+                          : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-zinc-800'
+                      }`}
+                    >
+                      <ShoppingBag className="w-4 h-4" />
+                      <span>{language === 'ar' ? 'طلبيات واردة جديدة' : 'Nouvelles'}</span>
+                      <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800">
+                        0
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setOrderTab('preparing')}
+                      className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
+                        orderTab === 'preparing'
+                          ? 'bg-amber-500 text-zinc-950 font-extrabold shadow-sm'
+                          : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-zinc-800'
+                      }`}
+                    >
+                      <Package className="w-4 h-4" />
+                      <span>{language === 'ar' ? 'قيد التجهيز بالمستودع' : 'En préparation'}</span>
+                      <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800">
+                        0
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setOrderTab('in_van')}
+                      className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
+                        orderTab === 'in_van'
+                          ? 'bg-blue-600 text-white font-extrabold shadow-sm'
+                          : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-zinc-800'
+                      }`}
+                    >
+                      <Truck className="w-4 h-4" />
+                      <span>{language === 'ar' ? 'في الشاحنة للتوصيل' : 'En livraison'}</span>
+                      <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800">
+                        0
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setOrderTab('delivered')}
+                      className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
+                        orderTab === 'delivered'
+                          ? 'bg-slate-800 dark:bg-zinc-100 text-white dark:text-zinc-950 font-extrabold shadow-sm'
+                          : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-zinc-800'
+                      }`}
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>{language === 'ar' ? 'تم التسليم' : 'Livrées'}</span>
+                      <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800">
+                        0
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setOrderTab('abandoned_carts')}
+                      className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
+                        orderTab === 'abandoned_carts'
+                          ? 'bg-amber-500 text-zinc-950 font-extrabold shadow-sm'
+                          : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-zinc-800'
+                      }`}
+                    >
+                      <ShoppingBag className="w-4 h-4" />
+                      <span>{language === 'ar' ? 'سلات لم تُرسل (متروكة)' : 'Paniers brouillons'}</span>
+                      <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${
+                        orderTab === 'abandoned_carts'
+                          ? 'bg-zinc-950/40 text-zinc-950 font-black'
+                          : abandonedCarts.length > 0
+                          ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-500/30 font-bold'
+                          : 'bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800'
+                      }`}>
+                        {abandonedCarts.length}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Orders Search bar */}
+                  <div className="relative w-full lg:w-72 shrink-0">
+                    <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 dark:text-emerald-400 pointer-events-none`} />
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder={language === 'ar' ? 'بحث برقم الطلبية، اسم المحل، أو الهاتف...' : 'Recherche commande, client...'}
+                      className={`w-full bg-slate-50 dark:bg-zinc-900/90 border border-slate-200 dark:border-zinc-800 rounded-xl ${
+                        isRTL ? 'pr-9 pl-3 text-right' : 'pl-9 pr-3 text-left'
+                      } py-2 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all shadow-inner`}
+                    />
+                  </div>
+                </div>
+              ) : currentSection === 'clients' ? (
+                <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+                  {/* Clients Specific Tabs */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() => setActiveTab('pending')}
+                      className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
+                        activeTab === 'pending'
+                          ? 'bg-amber-500 text-zinc-950 font-extrabold shadow-sm'
+                          : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-zinc-800'
+                      }`}
+                    >
+                      <Clock className="w-4 h-4" />
+                      <span>{t.admin.tabs.pending}</span>
+                      <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${activeTab === 'pending' ? 'bg-zinc-950/40 text-zinc-950 font-black' : 'bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800'}`}>
+                        {pendingCount}
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveTab('approved')}
+                      className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
+                        activeTab === 'approved'
+                          ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-extrabold shadow-sm'
+                          : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-zinc-800'
+                      }`}
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>{t.admin.tabs.approved}</span>
+                      <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${activeTab === 'approved' ? 'bg-white/30 text-white font-black' : 'bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800'}`}>
+                        {approvedCount}
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveTab('rejected')}
+                      className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
+                        activeTab === 'rejected'
+                          ? 'bg-rose-600 text-white font-extrabold shadow-sm'
+                          : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-zinc-800'
+                      }`}
+                    >
+                      <XCircle className="w-4 h-4" />
+                      <span>{t.admin.tabs.rejected}</span>
+                      <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${activeTab === 'rejected' ? 'bg-white/30 text-white font-black' : 'bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800'}`}>
+                        {rejectedCount}
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveTab('all')}
+                      className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shrink-0 ${
+                        activeTab === 'all'
+                          ? 'bg-slate-800 dark:bg-zinc-100 text-white dark:text-zinc-950 font-extrabold shadow-sm'
+                          : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-zinc-800'
+                      }`}
+                    >
+                      <Users className="w-4 h-4" />
+                      <span>{t.admin.tabs.all}</span>
+                      <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${activeTab === 'all' ? 'bg-white/30 dark:bg-zinc-300 text-white dark:text-zinc-950 font-black' : 'bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800'}`}>
+                        {profiles.length}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Clients Search bar */}
+                  <div className="relative w-full lg:w-72 shrink-0">
+                    <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 dark:text-emerald-400 pointer-events-none`} />
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder={t.admin.searchPlaceholders.accounts}
+                      className={`w-full bg-slate-50 dark:bg-zinc-900/90 border border-slate-200 dark:border-zinc-800 rounded-xl ${
+                        isRTL ? 'pr-9 pl-3 text-right' : 'pl-9 pr-3 text-left'
+                      } py-2 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all shadow-inner`}
+                    />
+                  </div>
+                </div>
+              ) : null}
+
+        {/* Section Content */}
+        {currentSection === 'security_logs' ? (
 
         /* Security logs tab */
         <div className="bg-white dark:bg-[#121215] rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm dark:shadow-2xl ring-1 ring-slate-900/5 dark:ring-white/5 overflow-hidden">
@@ -886,15 +1208,8 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
             </div>
           )}
         </div>
-      ) : activeTab === 'products' ? (
-        <ProductManager
-          products={products}
-          categories={categories}
-          onRefresh={loadData}
-          isRTL={isRTL}
-          language={language}
-        />
-      ) : activeTab === 'abandoned_carts' ? (
+      ) : currentSection === 'orders' ? (
+        orderTab === 'abandoned_carts' ? (
         /* Abandoned Carts / Pending Drafts tab */
         <div className="space-y-4">
           <div className="bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent p-4 rounded-2xl border border-amber-300 dark:border-amber-500/30 flex items-center justify-between gap-3 shadow-sm dark:shadow-2xl ring-1 ring-slate-900/5 dark:ring-white/5">
@@ -1058,6 +1373,51 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
             </div>
           )}
         </div>
+        ) : (
+          /* Order Pipeline Stages: new_orders, preparing, in_van, delivered */
+          <div className="bg-white dark:bg-[#121215] rounded-3xl border border-slate-200 dark:border-zinc-800 p-8 sm:p-12 text-center shadow-sm dark:shadow-2xl ring-1 ring-slate-900/5 dark:ring-white/5">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center mx-auto mb-4">
+              {orderTab === 'new_orders' && <ShoppingBag className="w-8 h-8" />}
+              {orderTab === 'preparing' && <Package className="w-8 h-8" />}
+              {orderTab === 'in_van' && <Truck className="w-8 h-8" />}
+              {orderTab === 'delivered' && <CheckCircle2 className="w-8 h-8" />}
+            </div>
+            <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">
+              {orderTab === 'new_orders' && (language === 'ar' ? 'طلبيات واردة جديدة من المتجر (0 طلبية)' : 'Nouvelles Commandes (0)')}
+              {orderTab === 'preparing' && (language === 'ar' ? 'طلبيات قيد التجهيز بالمستودع (0)' : 'En préparation au stock (0)')}
+              {orderTab === 'in_van' && (language === 'ar' ? 'طلبيات في الشاحنة للتوصيل (0)' : 'En camion de livraison (0)')}
+              {orderTab === 'delivered' && (language === 'ar' ? 'سجل الفواتير والطلبيات المسلمة (0)' : 'Commandes livrées (0)')}
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 max-w-md mx-auto mb-6 leading-relaxed">
+              {orderTab === 'new_orders' && (language === 'ar'
+                ? 'تظهر هنا فورياً طلبيات التجار المؤكدة من المتجر، مع تنبيه صوتي وإشعار فوري للبدء بالتأكيد وتجهيز الفاتورة.'
+                : 'Les commandes validées par les commerçants apparaissent ici en temps réel.')}
+              {orderTab === 'preparing' && (language === 'ar'
+                ? 'الطلبيات المؤكدة التي يقوم عمال المستودع بجمعها وتغليفها وطباعة الفاتورة وقائمة التجهيز.'
+                : 'Commandes en cours de préparation au dépôt.')}
+              {orderTab === 'in_van' && (language === 'ar'
+                ? 'الطلبيات المحمّلة في الشاحنة والموزعة حسب مسارات البلديات بانتظار تسليمها وتأكيد الاستلام نقداً.'
+                : 'Marchandises chargées dans les camions de tournée.')}
+              {orderTab === 'delivered' && (language === 'ar'
+                ? 'سجل الفواتير والطلبيات المسلمة لمحلات التجار مع إيصالات الاستلام المحاسبية.'
+                : 'Historique des livraisons et encaissements terminés.')}
+            </p>
+            {abandonedCarts.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setOrderTab('abandoned_carts')}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-500/30 text-xs sm:text-sm font-bold transition-all shadow-sm"
+              >
+                <ShoppingBag className="w-4 h-4" />
+                <span>
+                  {language === 'ar'
+                    ? `عرض السلات المتروكة التي لم تُرسل بعد (${abandonedCarts.length}) للتواصل مع التجار`
+                    : `Voir les paniers non validés (${abandonedCarts.length})`}
+                </span>
+              </button>
+            )}
+          </div>
+        )
       ) : (
         /* Accounts list */
         <div>
@@ -1284,6 +1644,10 @@ export default function AdminAccountsPage({ onBack }: AdminAccountsPageProps) {
           )}
         </div>
       )}
+            </div>
+          )}
+        </main>
+      </div>
 
 
       {/* Custom Confirmation Modal: Clear Security Logs */}

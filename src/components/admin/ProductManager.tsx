@@ -15,7 +15,6 @@ import {
   Trash2,
   Package,
   Layers,
-  Sparkles,
   UploadCloud,
   ImageIcon,
   Loader2,

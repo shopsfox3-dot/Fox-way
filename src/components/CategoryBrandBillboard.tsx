@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
-import { Sparkles } from 'lucide-react';
+import { Layers } from 'lucide-react';
 
 interface CategoryBrandBillboardProps {
   brandImages?: string[];
@@ -27,7 +27,7 @@ export function CategoryBrandBillboard({
     return (
       <div className="relative w-full aspect-[16/9] rounded-xl bg-gradient-to-br from-slate-100 to-slate-200/80 dark:from-zinc-900 dark:to-zinc-950 border border-slate-200/90 dark:border-zinc-800/80 flex flex-col items-center justify-center p-3 mb-2 overflow-hidden group-hover:border-emerald-500/40 transition-colors">
         <div className="w-8 h-8 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-1">
-          <Sparkles className="w-4 h-4 animate-pulse" />
+          <Layers className="w-4 h-4" />
         </div>
         <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 dark:text-zinc-500">
           {language === 'ar' ? 'تشكيلة أصلية بالجملة' : language === 'fr' ? 'Sélection originale' : 'Original Selection'}

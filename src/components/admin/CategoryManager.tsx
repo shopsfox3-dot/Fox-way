@@ -14,7 +14,6 @@ import {
   X,
   ArrowUpDown,
   ImageIcon,
-  Sparkles,
   UploadCloud,
   ImagePlus,
   Link as LinkIcon,
@@ -384,7 +383,7 @@ export default function CategoryManager({
         <div>
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <Sparkles className="w-5 h-5" />
+              <Layers className="w-5 h-5" />
             </div>
             <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
               {txt.title}
@@ -463,7 +462,7 @@ export default function CategoryManager({
 
                   {/* Brands counter badge */}
                   <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
-                    <Sparkles className="w-3.5 h-3.5" />
+                    <Layers className="w-3.5 h-3.5" />
                     <span>
                       {images.length}{' '}
                       {language === 'fr'
@@ -545,7 +544,7 @@ export default function CategoryManager({
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-zinc-800 mb-4">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                  <Sparkles className="w-4 h-4" />
+                  <Layers className="w-4 h-4" />
                 </div>
                 <h3 className="font-bold text-base text-slate-900 dark:text-white">
                   {editingCategory
@@ -612,7 +611,7 @@ export default function CategoryManager({
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+                      <Layers className="w-3.5 h-3.5 text-emerald-500" />
                       <span>{txt.brandsTitle}</span>
                     </h4>
                     <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">

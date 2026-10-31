@@ -17,7 +17,7 @@ import {
   ShoppingBag,
   Package,
   Box,
-  Sparkles,
+  BadgePercent,
 } from 'lucide-react';
 
 interface CartPageProps {
@@ -146,7 +146,7 @@ export default function CartPage({ onBack }: CartPageProps) {
 
         {totalSavings > 0 && (
           <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-500/40 text-emerald-700 dark:text-emerald-300 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm dark:shadow-neon-sm">
-            <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400 animate-pulse" />
+            <BadgePercent className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>{t.cart.savingsBadge} {formatDA(totalSavings, t.common.daCurrency)}!</span>
           </div>
         )}

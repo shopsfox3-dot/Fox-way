@@ -52,7 +52,7 @@ const DEFAULT_SHOP_TYPES: ShopType[] = [
   { id: 1, name: 'صيدلية', icon: 'Pill', sort_order: 1 },
   { id: 2, name: 'كيوسك', icon: 'Newspaper', sort_order: 2 },
   { id: 3, name: 'سوبر ماركت', icon: 'ShoppingCart', sort_order: 3 },
-  { id: 4, name: 'مستحضرات تجميل', icon: 'Sparkles', sort_order: 4 },
+  { id: 4, name: 'مستحضرات تجميل', icon: 'Layers', sort_order: 4 },
   { id: 5, name: 'كانكاري', icon: 'Store', sort_order: 5 },
   { id: 6, name: 'ملحمة', icon: 'Beef', sort_order: 6 },
   { id: 7, name: 'مخبزة', icon: 'Croissant', sort_order: 7 },
@@ -100,7 +100,7 @@ export async function createCategory(cat: {
       .insert({
         name: cat.name.trim(),
         name_fr: cat.name_fr ? cat.name_fr.trim() : null,
-        icon: cat.icon || 'Sparkles',
+        icon: cat.icon || 'Layers',
         sort_order: cat.sort_order ?? 0,
         brand_images: cat.brand_images || [],
       })
